@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>JOGONÍA v3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;}
+:root{
+  --gold:#ffd700;--gold2:#7a5a00;--green:#00ff41;--green2:#003300;
+  --red:#ff3333;--blue:#44aaff;--orange:#ff8800;--purple:#aa44ff;
+  --bg:#090909;--panel:#111;--border:#1e1e1e;--text:#e0ddd0;
+  --shadow:2px 2px 0 #000;--tile:34px;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Press Start 2P',monospace;color:var(--text);}
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#111;}
+::-webkit-scrollbar-thumb{background:var(--gold2);}
+
+/* ══ TITLE ══ */
+#title{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;gap:14px;}
+.t-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,#0a1a00 0%,#000 70%);}
+.t-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,65,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.05) 1px,transparent 1px);background-size:30px 30px;}
+.t-h1{font-size:clamp(18px,5vw,42px);color:var(--gold);text-shadow:0 0 30px var(--gold),4px 4px 0 var(--gold2);letter-spacing:6px;z-index:1;animation:glow 2s ease-in-out infinite;}
+.t-h2{font-size:clamp(7px,1.8vw,11px);color:var(--green);letter-spacing:3px;z-index:1;}
+.t-info{font-family:'VT323',monospace;font-size:clamp(15px,3vw,20px);color:#999;z-index:1;text-align:center;max-width:420px;line-height:1.7;padding:0 20px;}
+.t-btns{display:flex;gap:12px;z-index:1;flex-wrap:wrap;justify-content:center;}
+.t-btn{background:var(--gold);color:#000;border:3px solid #fff;padding:10px 22px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;box-shadow:4px 4px 0 var(--gold2);transition:.1s;}
+.t-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--gold2);}
+.t-btn.sec{background:#111;color:var(--gold);border-color:var(--gold);}
+@keyframes glow{0%,100%{text-shadow:0 0 20px var(--gold),4px 4px 0 var(--gold2);}50%{text-shadow:0 0 60px var(--gold),0 0 100px #ffa500,4px 4px 0 var(--gold2);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+@keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ══ GAME ══ */
+#game{display:none;flex-direction:column;width:100vw;height:100vh;}
+
+/* ══ HUD ══ */
+#hud{display:flex;align-items:stretch;background:#080808;border-bottom:2px solid var(--gold2);flex-shrink:0;overflow-x:auto;min-height:52px;}
+.hud-cell{display:flex;flex-direction:column;justify-content:center;padding:4px 10px;border-right:1px solid #1e1e1e;min-width:0;flex-shrink:0;}
+.hud-lbl{font-size:5px;color:#555;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+.hud-val{font-size:9px;color:var(--gold);text-shadow:var(--shadow);white-space:nowrap;margin-top:2px;}
+.hud-val.g{color:var(--green);}
+.hud-val.r{color:var(--red);}
+.hud-val.b{color:var(--blue);}
+.hud-val.o{color:var(--orange);}
+.hud-val.p{color:var(--purple);}
+#wanted-bar{display:flex;gap:2px;margin-top:2px;}
+.wstar{font-size:11px;opacity:.2;transition:.3s;}
+.wstar.on{opacity:1;filter:drop-shadow(0 0 4px #ff0);}
+.hud-speed{display:flex;gap:4px;align-items:center;margin-top:2px;}
+.spd-btn{background:#1a1a1a;border:1px solid #333;color:#888;font-family:'Press Start 2P',monospace;font-size:6px;padding:2px 5px;cursor:pointer;}
+.spd-btn.active{background:var(--gold2);border-color:var(--gold);color:var(--gold);}
+
+/* ══ MAP ══ */
+#map-wrap{position:relative;flex:1;overflow:hidden;background:#1a2a1a;}
+#gc{display:block;}
+
+/* ══ BOTTOM BAR ══ */
+#bot{display:flex;gap:5px;padding:6px 8px;background:#080808;border-top:2px solid var(--gold2);flex-shrink:0;flex-wrap:wrap;align-items:center;}
+.bb{background:#0d0d0d;border:2px solid var(--gold2);color:var(--gold);font-family:'Press Start 2P',monospace;font-size:7px;padding:6px 10px;cursor:pointer;transition:.12s;box-shadow:2px 2px 0 #000;white-space:nowrap;flex-shrink:0;}
+.bb:hover{background:var(--gold);color:#000;border-color:var(--gold);}
+.bb:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #000;}
+.bb:disabled{opacity:.3;cursor:not-allowed;}
+.bb.g{border-color:#004400;color:var(--green);}
+.bb.g:hover{background:var(--green);color:#000;border-color:var(--green);}
+.bb.r{border-color:#440000;color:var(--red);}
+.bb.r:hover{background:var(--red);color:#fff;border-color:var(--red);}
+.bb.b{border-color:#002244;color:var(--blue);}
+.bb.b:hover{background:var(--blue);color:#000;border-color:var(--blue);}
+.bb.p{border-color:#220044;color:var(--purple);}
+.bb.p:hover{background:var(--purple);color:#fff;border-color:var(--purple);}
+
+/* ══ MODAL ══ */
+#mo{display:none;position:fixed;inset:0;background:#000d;z-index:100;align-items:center;justify-content:center;padding:14px;}
+#mo.open{display:flex;}
+#mbox{background:#090909;border:3px solid var(--gold2);max-width:520px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:6px 6px 0 #000,0 0 30px #ffd70022;animation:fadein .15s ease;}
+#mtop{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #1e1e1e;flex-shrink:0;}
+#mtitle{font-size:9px;color:var(--gold);}
+#mclose{background:none;border:1px solid #444;color:#888;font-size:14px;cursor:pointer;padding:2px 7px;font-family:monospace;}
+#mclose:hover{border-color:var(--red);color:var(--red);}
+#mscroll{flex:1;overflow-y:auto;padding:12px 14px;}
+#mcont{font-family:'VT323',monospace;font-size:19px;line-height:1.55;}
+#mload{font-family:'VT323',monospace;font-size:22px;color:var(--green);animation:blink .5s step-end infinite;display:none;padding:6px 0;}
+#mbtns{display:flex;gap:7px;padding:10px 14px;border-top:1px solid #1e1e1e;flex-wrap:wrap;flex-shrink:0;}
+
+/* ══ OPTION BTN ══ */
+.opt{display:block;width:100%;text-align:left;background:#0e0e0e;border:1px solid #252525;color:var(--text);font-family:'VT323',monospace;font-size:19px;padding:9px 12px;cursor:pointer;margin-bottom:5px;transition:.12s;line-height:1.3;}
+.opt:hover{border-color:var(--gold);color:var(--gold);background:#141400;}
+.opt:disabled{opacity:.3;cursor:not-allowed;}
+.opt.g:hover{border-color:var(--green);color:var(--green);background:#001400;}
+.opt.r:hover{border-color:var(--red);color:var(--red);background:#140000;}
+.opt.b:hover{border-color:var(--blue);color:var(--blue);background:#000a14;}
+.opt.p:hover{border-color:var(--purple);color:var(--purple);background:#08001a;}
+
+/* ══ TABLE ══ */
+.tbl{width:100%;border-collapse:collapse;font-family:'VT323',monospace;font-size:18px;}
+.tbl th{color:#555;font-size:13px;text-align:left;padding:4px 6px;border-bottom:1px solid #1e1e1e;font-family:'Press Start 2P',monospace;}
+.tbl td{padding:5px 6px;border-bottom:1px solid #111;}
+.tbl tr:hover td{background:#0f0f0f;}
+.up{color:#00ff88;}.dn{color:var(--red);}.coin{color:var(--gold);}
+
+/* ══ TOAST NOTIFICATION ══ */
+#toast{position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#0d0d0d;border:2px solid var(--green);color:var(--green);font-family:'VT323',monospace;font-size:19px;padding:6px 16px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s;text-align:center;max-width:92vw;white-space:nowrap;}
+#toast.show{opacity:1;}
+#toast.r{border-color:var(--red);color:var(--red);}
+#toast.g{border-color:var(--gold);color:var(--gold);}
+#toast.b{border-color:var(--blue);color:var(--blue);}
+#toast.o{border-color:var(--orange);color:var(--orange);}
+
+/* ══ EVENT BANNER ══ */
+#evt-banner{position:fixed;bottom:80px;right:12px;background:#0d0d0d;border:2px solid var(--orange);max-width:260px;padding:10px 12px;z-index:150;animation:fadein .3s ease;display:none;}
+#evt-banner.show{display:block;}
+.evt-title{font-size:8px;color:var(--orange);margin-bottom:5px;}
+.evt-body{font-family:'VT323',monospace;font-size:16px;line-height:1.4;}
+.evt-close{font-size:7px;cursor:pointer;color:#555;margin-top:6px;display:block;}
+.evt-close:hover{color:var(--red);}
+
+/* ══ MOBILE ══ */
+@media(max-width:600px){
+  .hud-cell{padding:3px 7px;}
+  .hud-val{font-size:8px;}
+  .hud-lbl{font-size:4px;}
+  .bb{font-size:6px;padding:5px 7px;}
+  #bot{gap:4px;padding:5px 6px;}
+  .mob-hide{display:none;}
+}
+@media(max-width:380px){
+  .t-h1{font-size:16px;}
+  .bb{font-size:5px;padding:4px 6px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ TITLE ════════ -->
+<div id="title">
+  <div class="t-bg"></div>
+  <div class="t-grid"></div>
+  <div class="t-h1" id="tit-main">JOGONÍA</div>
+  <div class="t-h2" id="tit-sub">Del Sofá al Bitcoin</div>
+  <div class="t-info" id="tit-desc">Año 2008. €50 en el bolsillo.<br>Trabaja, invierte en cripto y<br>compra todo el pueblo.</div>
+  <div class="t-btns">
+    <button class="t-btn" id="btn-new" onclick="newGame()">▶ EMPEZAR</button>
+    <button class="t-btn sec" id="btn-load" onclick="loadAndStart()" style="display:none">📂 CONTINUAR</button>
+    <button class="t-btn sec" onclick="toggleLang()">🌐 EN/ES</button>
+  </div>
+  <div style="font-family:'VT323',monospace;font-size:14px;color:#333;z-index:1;margin-top:4px" id="save-info"></div>
+</div>
+
+<!-- ════════ GAME ════════ -->
+<div id="game">
+  <div id="hud">
+    <div class="hud-cell">
+      <div class="hud-lbl" data-t="date">Fecha</div>
+      <div class="hud-val o" id="h-date">Ene 2008</div>
+    </div>
+    <div class="hud-cell">
+      <div class="hud-lbl" data-t="money">Dinero</div>
+      <div class="hud-val" id="h-money">€50</div>
+    </div>
+    <div class="hud-cell mob-hide">
+      <div class="hud-lbl">Bitcoin</div>
+      <div class="hud-val b" id="h-btc">0 ₿</div>
+    </div>
+    <div class="hud-cell mob-hide">
+      <div class="hud-lbl">ETH</div>
+      <div class="hud-val b" id="h-eth">0 Ξ</div>
+    </div>
+    <div class="hud-cell mob-hide">
+      <div class="hud-lbl">Oro</div>
+      <div class="hud-val" id="h-gold">0 oz</div>
+    </div>
+    <div class="hud-cell mob-hide">
+      <div class="hud-lbl">S&P500</div>
+      <div class="hud-val p" id="h-sp500">0</div>
+    </div>
+    <div class="hud-cell">
+      <div class="hud-lbl" data-t="worth">Patrimonio</div>
+      <div class="hud-val g" id="h-worth">€50</div>
+    </div>
+    <div class="hud-cell mob-hide">
+      <div class="hud-lbl" data-t="houses">Casas</div>
+      <div class="hud-val g" id="h-houses">1/7</div>
+    </div>
+    <div class="hud-cell">
+      <div class="hud-lbl" data-t="wanted">Buscado</div>
+      <div id="wanted-bar">
+        <span class="wstar" id="s1">⭐</span><span class="wstar" id="s2">⭐</span>
+        <span class="wstar" id="s3">⭐</span><span class="wstar" id="s4">⭐</span><span class="wstar" id="s5">⭐</span>
+      </div>
+    </div>
+    <div class="hud-cell mob-hide">
+      <div class="hud-lbl" data-t="speed">Velocidad</div>
+      <div class="hud-speed">
+        <button class="spd-btn active" id="spd1" onclick="setSpeed(1)">1x</button>
+        <button class="spd-btn" id="spd2" onclick="setSpeed(7)">7x</button>
+        <button class="spd-btn" id="spd3" onclick="setSpeed(30)">30x</button>
+        <button class="spd-btn" id="spd0" onclick="togglePause()">⏸</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="map-wrap"><canvas id="gc"></canvas></div>
+
+  <div id="bot">
+    <button class="bb g" onclick="doWork()">⚒ <span data-t="work">Trabajar</span></button>
+    <button class="bb b" onclick="doMarket()">📊 <span data-t="market">Mercado</span></button>
+    <button class="bb r" onclick="doCrime()">🔪 <span data-t="crime">Crimen</span></button>
+    <button class="bb" onclick="doHouses()">🏘 <span data-t="houses2">Casas</span></button>
+    <button class="bb p mob-hide" onclick="doShop()">🛒 <span data-t="shop">Tienda</span></button>
+    <button class="bb mob-hide" onclick="doNews()">📰 <span data-t="news">Noticias</span></button>
+    <button class="bb mob-hide" onclick="doSettings()">⚙ <span data-t="settings">Ajustes</span></button>
+    <button class="bb g" onclick="interact()">E <span data-t="enter">Entrar</span></button>
+  </div>
+</div>
+
+<!-- ════════ MODAL ════════ -->
+<div id="mo">
+  <div id="mbox">
+    <div id="mtop">
+      <div id="mtitle">—</div>
+      <button id="mclose" onclick="closeModal()">✕</button>
+    </div>
+    <div id="mscroll">
+      <div id="mcont"></div>
+      <div id="mload">▌ Generando...</div>
+    </div>
+    <div id="mbtns"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="evt-banner">
+  <div class="evt-title" id="evt-title">EVENTO</div>
+  <div class="evt-body" id="evt-body">—</div>
+  <span class="evt-close" onclick="hideBanner()">✕ Cerrar</span>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════
+//  i18n
+// ═══════════════════════════════════════════════════════════
+const T = {
+  es:{
+    date:'Fecha',money:'Dinero',worth:'Patrimonio',houses:'Casas',wanted:'Buscado',speed:'Velocidad',
+    work:'Trabajar',market:'Mercado',crime:'Crimen',houses2:'Casas',shop:'Tienda',news:'Noticias',settings:'Ajustes',enter:'Entrar',
+    cancel:'Cancelar',close:'Cerrar',buy:'Comprar',sell:'Vender',collect:'Cobrar',accept:'Aceptar',
+    saved:'✅ Partida guardada','save_error':'❌ Error al guardar',
+    no_pc:'Necesitas un PC para esto',no_funds:'No tienes suficiente dinero',
+    arrested:'🚨 ¡ARRESTADO!',jail_msg:'La policía te atrapó. Multa:',jail_year:'Cumples 1 año de cárcel.',
+    unlock_year:'Desbloquea en',needed:'Faltan',
+    year_sum:'Resumen del Año',new_year:'¡Nuevo Año!',
+    btc_na:'Bitcoin no existe aún',eth_na:'Ethereum no existe aún',
+    victory:'¡LEYENDA DE JOGONÍA!',new_game:'Nueva Partida',
+    choose_job:'Elige un trabajo para',choose_action:'Elige una acción',
+    passive_inc:'💹 Ingresos pasivos',work_menu:'⚒ TRABAJAR',
+    market_menu:'📊 MERCADO',crime_menu:'🔪 CRIMEN',house_menu:'🏘 PROPIEDADES',
+    shop_menu:'🛒 TIENDA',news_menu:'📰 NOTICIAS',settings_menu:'⚙ AJUSTES',
+    language:'Idioma',auto_save:'Guardado automático',manual_save:'💾 Guardar ahora',
+    delete_save:'🗑 Borrar partida',confirm_delete:'¿Seguro? Perderás todo.',yes_delete:'Sí, borrar',
+    net_worth:'Patrimonio total',portfolio:'Portafolio',
+    buy_pc:'Comprar PC — €300',buy_phone:'Smartphone — €150',buy_rig:'Mining Rig — €2000',
+    buy_server:'Servidor Farm — €15000',buy_smarthome:'Smart Home — €5000',
+    items_owned:'Objetos',no_items:'Sin objetos especiales',
+    own:'✅ Tuya',locked:'🔒',
+    enter_house:'Entrar a',not_near:'Acércate a una casa',
+    robHouse:'🏠 Robar una casa',robNPC:'👜 Robar a un NPC',hackPc:'💻 Hackear',robbery:'🏦 Atraco a tienda',
+    invest:'Invertir',divest:'Vender todo',qty:'Cantidad',price:'Precio',change:'Cambio',value:'Valor',
+    events_log:'Historial de eventos',no_events:'Sin eventos registrados',
+    paused:'⏸ PAUSADO',
+  },
+  en:{
+    date:'Date',money:'Cash',worth:'Net Worth',houses:'Houses',wanted:'Wanted',speed:'Speed',
+    work:'Work',market:'Market',crime:'Crime',houses2:'Houses',shop:'Shop',news:'News',settings:'Settings',enter:'Enter',
+    cancel:'Cancel',close:'Close',buy:'Buy',sell:'Sell',collect:'Collect',accept:'Accept',
+    saved:'✅ Game Saved','save_error':'❌ Save Error',
+    no_pc:'You need a PC for this',no_funds:'Not enough money',
+    arrested:'🚨 ARRESTED!',jail_msg:'Police caught you. Fine:',jail_year:'Serving 1 year in jail.',
+    unlock_year:'Unlocks at',needed:'Missing',
+    year_sum:'Year Summary',new_year:'New Year!',
+    btc_na:'Bitcoin does not exist yet',eth_na:'Ethereum does not exist yet',
+    victory:'LEGEND OF JOGONÍA!',new_game:'New Game',
+    choose_job:'Choose a job for',choose_action:'Choose an action',
+    passive_inc:'💹 Passive Income',work_menu:'⚒ WORK',
+    market_menu:'📊 MARKET',crime_menu:'🔪 CRIME',house_menu:'🏘 PROPERTIES',
+    shop_menu:'🛒 SHOP',news_menu:'📰 NEWS',settings_menu:'⚙ SETTINGS',
+    language:'Language',auto_save:'Auto-save',manual_save:'💾 Save Now',
+    delete_save:'🗑 Delete Save',confirm_delete:'Sure? You will lose everything.',yes_delete:'Yes, delete',
+    net_worth:'Net Worth',portfolio:'Portfolio',
+    buy_pc:'Buy PC — €300',buy_phone:'Smartphone — €150',buy_rig:'Mining Rig — €2000',
+    buy_server:'Server Farm — €15000',buy_smarthome:'Smart Home — €5000',
+    items_owned:'Items',no_items:'No special items',
+    own:'✅ Yours',locked:'🔒',
+    enter_house:'Enter',not_near:'Get close to a house first',
+    robHouse:'🏠 Rob a house',robNPC:'👜 Mug an NPC',hackPc:'💻 Hack a computer',robbery:'🏦 Rob a store',
+    invest:'Invest',divest:'Sell All',qty:'Qty',price:'Price',change:'Change',value:'Value',
+    events_log:'Event Log',no_events:'No events yet',
+    paused:'⏸ PAUSED',
+  }
+};
+let lang='es';
+function t(k){return T[lang][k]||T.es[k]||k;}
+function applyLang(){
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const k=el.getAttribute('data-t'); el.textContent=t(k);
+  });
+  document.getElementById('tit-sub').textContent=lang==='es'?'Del Sofá al Bitcoin':'From Couch to Bitcoin';
+  document.getElementById('tit-desc').textContent=lang==='es'?
+    'Año 2008. €50 en el bolsillo.\nTrabaja, invierte y compra todo el pueblo.':
+    'Year 2008. €50 in your pocket.\nWork, invest and buy the whole town.';
+  document.getElementById('btn-new').textContent=lang==='es'?'▶ EMPEZAR':'▶ START';
+  const bl=document.getElementById('btn-load');
+  if(bl.style.display!=='none') bl.textContent=lang==='es'?'📂 CONTINUAR':'📂 CONTINUE';
+}
+function toggleLang(){lang=lang==='es'?'en':'es';applyLang();}
+
+// ═══════════════════════════════════════════════════════════
+//  HISTORICAL PRICE DATA
+// ═══════════════════════════════════════════════════════════
+// Format: [year, month (1-12), price]
+const PRICE_PTS = {
+  btc:[
+    [2008,1,0],[2009,1,0.001],[2009,10,0.003],[2010,5,0.07],[2010,10,0.08],
+    [2011,2,1],[2011,6,25],[2011,12,4],[2012,6,6],[2013,1,13],[2013,4,100],
+    [2013,11,900],[2014,1,700],[2014,12,270],[2015,1,220],[2016,1,360],
+    [2016,7,600],[2017,1,900],[2017,6,2400],[2017,12,16000],[2018,1,12000],
+    [2018,6,6000],[2018,12,3300],[2019,6,9500],[2019,12,6800],[2020,3,4800],
+    [2020,6,8800],[2020,12,23000],[2021,4,51000],[2021,11,61000],[2022,1,38000],
+    [2022,6,19000],[2022,11,15500],[2023,1,16000],[2023,6,27000],[2023,12,39000],
+    [2024,1,40000],[2024,3,63000],[2024,6,55000],[2024,11,80000],[2024,12,92000],
+    [2025,1,95000],[2025,3,82000],[2026,1,98000],[2026,3,93000]
+  ],
+  eth:[
+    [2015,7,1],[2015,12,0.8],[2016,3,10],[2016,12,8],[2017,6,300],[2017,12,800],
+    [2018,1,1100],[2018,6,500],[2018,12,90],[2019,6,260],[2019,12,130],
+    [2020,3,120],[2020,12,620],[2021,5,3800],[2021,11,4400],[2022,1,3000],
+    [2022,6,1100],[2022,11,1100],[2023,1,1200],[2023,6,1800],[2023,12,2200],
+    [2024,3,3800],[2024,6,3200],[2024,12,3700],[2025,1,3500],[2025,3,2900],
+    [2026,1,3100],[2026,3,2700]
+  ],
+  gold:[
+    [2008,1,640],[2008,9,680],[2009,1,800],[2010,1,1000],[2011,9,1650],
+    [2012,1,1600],[2013,1,1600],[2013,6,1100],[2014,1,1200],[2015,1,1100],
+    [2016,1,1100],[2017,1,1140],[2018,1,1220],[2018,8,1100],[2019,1,1240],
+    [2019,9,1450],[2020,3,1580],[2020,8,1970],[2021,1,1790],[2022,1,1760],
+    [2022,3,1980],[2022,9,1620],[2023,1,1810],[2023,12,2000],[2024,1,2000],
+    [2024,4,2300],[2024,10,2600],[2025,1,2720],[2025,3,2900],[2026,1,2950],
+    [2026,3,3100]
+  ],
+  sp500:[
+    [2008,1,1380],[2008,9,1100],[2009,3,680],[2009,12,1100],[2010,1,1100],
+    [2011,1,1250],[2012,1,1300],[2013,1,1480],[2014,1,1830],[2015,1,2000],
+    [2016,1,1900],[2017,1,2260],[2018,1,2800],[2018,12,2400],[2019,1,2500],
+    [2020,3,2200],[2020,12,3700],[2021,1,3700],[2021,12,4740],[2022,1,4600],
+    [2022,10,3600],[2023,1,3870],[2023,12,4780],[2024,1,4850],[2024,6,5500],
+    [2024,12,5900],[2025,1,5900],[2025,3,5700],[2026,1,5200],[2026,3,5400]
+  ],
+  apple:[
+    [2008,1,14],[2009,1,12],[2010,1,28],[2011,1,47],[2012,1,56],[2013,1,75],
+    [2014,1,72],[2015,1,105],[2016,1,105],[2016,6,90],[2017,1,115],
+    [2018,1,165],[2019,1,140],[2019,12,280],[2020,3,225],[2020,12,120],
+    [2021,1,130],[2022,1,170],[2022,12,130],[2023,1,130],[2023,12,190],
+    [2024,1,190],[2024,6,205],[2024,12,240],[2025,1,225],[2026,3,215]
+  ],
+  tesla:[
+    [2010,7,4],[2012,1,6],[2013,1,8],[2013,12,60],[2014,1,55],[2015,1,45],
+    [2016,1,40],[2017,1,50],[2018,1,60],[2019,1,60],[2019,12,90],[2020,1,90],
+    [2020,12,660],[2021,1,800],[2021,11,1000],[2022,1,900],[2022,12,120],
+    [2023,1,120],[2023,6,260],[2023,12,250],[2024,1,220],[2024,6,170],
+    [2024,12,380],[2025,1,400],[2025,3,280],[2026,3,260]
+  ],
+  solana:[
+    [2020,4,0.5],[2020,12,1.5],[2021,3,30],[2021,11,220],[2022,1,160],
+    [2022,12,10],[2023,1,10],[2023,12,90],[2024,3,180],[2024,11,230],
+    [2025,1,220],[2026,3,160]
+  ]
+};
+
+function getPrice(asset,year,month){
+  const pts=PRICE_PTS[asset];
+  if(!pts)return 0;
+  // Convert date to number
+  const val=year*12+month;
+  let lo=null,hi=null;
+  for(const p of pts){
+    const v=p[0]*12+p[1];
+    if(v<=val)lo=p;
+    if(v>=val&&!hi)hi=p;
+  }
+  if(!lo)return 0;
+  if(!hi||hi===lo)return lo[2];
+  const t=(val-(lo[0]*12+lo[1]))/((hi[0]*12+hi[1])-(lo[0]*12+lo[1]));
+  return lo[2]+(hi[2]-lo[2])*t;
+}
+
+function assetAvailable(asset,year,month){
+  if(asset==='btc')return year>2009||(year===2009&&month>=10);
+  if(asset==='eth')return year>2015||(year===2015&&month>=7);
+  if(asset==='solana')return year>=2020;
+  if(asset==='tesla')return year>=2010;
+  if(asset==='apple')return true;
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HISTORICAL EVENTS (fire at specific dates)
+// ═══════════════════════════════════════════════════════════
+const HIST_EVENTS = [
+  {y:2008,m:9,id:'lehman',emoji:'💥',
+   es:{title:'Crisis Lehman Brothers',body:'El banco Lehman Brothers quiebra. El S&P500 se desploma. El oro sube como refugio.'},
+   en:{title:'Lehman Brothers Crash',body:'Lehman Brothers collapses. S&P500 crashes. Gold rises as safe haven.'},
+   effect:{sp500:-0.45,gold:0.08}},
+  {y:2009,m:1,id:'btc_genesis',emoji:'₿',
+   es:{title:'¡Nace Bitcoin!',body:'Satoshi Nakamoto mina el bloque génesis. 1 BTC = €0.001. ¿Minas algunos?'},
+   en:{title:'Bitcoin is Born!',body:'Satoshi Nakamoto mines the genesis block. 1 BTC = €0.001. Mine some?'},
+   effect:{}},
+  {y:2010,m:5,id:'btc_pizza',emoji:'🍕',
+   es:{title:'La Pizza del Bitcoin',body:'Laszlo Hanyecz compra 2 pizzas por 10.000 BTC. Primera transacción comercial.'},
+   en:{title:'Bitcoin Pizza',body:'Laszlo Hanyecz buys 2 pizzas for 10,000 BTC. First commercial transaction.'},
+   effect:{btc:0.05}},
+  {y:2011,m:6,id:'btc_1dollar',emoji:'📈',
+   es:{title:'Bitcoin supera €1',body:'Por primera vez Bitcoin vale más de €1. Los cypherpunks están eufóricos.'},
+   en:{title:'Bitcoin over €1',body:'Bitcoin exceeds €1 for the first time. Cypherpunks are euphoric.'},
+   effect:{btc:0.15}},
+  {y:2013,m:3,id:'cyprus',emoji:'🏦',
+   es:{title:'Crisis de Chipre',body:'El gobierno de Chipre confisca depósitos bancarios. Bitcoin se dispara como alternativa.'},
+   en:{title:'Cyprus Banking Crisis',body:'Cyprus government seizes bank deposits. Bitcoin rockets as alternative.'},
+   effect:{btc:0.3,gold:0.1}},
+  {y:2013,m:10,id:'silk_road',emoji:'🕸',
+   es:{title:'FBI cierra Silk Road',body:'El mercado negro más grande de la darknet es clausurado. BTC cae temporalmente.'},
+   en:{title:'Silk Road Shutdown',body:'The largest darknet marketplace is shut down by the FBI. BTC drops briefly.'},
+   effect:{btc:-0.1}},
+  {y:2015,m:7,id:'eth_launch',emoji:'Ξ',
+   es:{title:'¡Lanzamiento de Ethereum!',body:'Vitalik Buterin lanza Ethereum. 1 ETH = €0.80. Los smart contracts cambian todo.'},
+   en:{title:'Ethereum Launches!',body:'Vitalik Buterin launches Ethereum. 1 ETH = €0.80. Smart contracts change everything.'},
+   effect:{}},
+  {y:2016,m:6,id:'brexit',emoji:'🇬🇧',
+   es:{title:'Brexit',body:'El Reino Unido vota salir de la UE. Los mercados se desploman. El oro sube.'},
+   en:{title:'Brexit',body:'UK votes to leave the EU. Markets crash. Gold surges.'},
+   effect:{sp500:-0.08,gold:0.05,apple:-0.05}},
+  {y:2017,m:12,id:'btc_20k',emoji:'🚀',
+   es:{title:'Bitcoin: ¡€16.000!',body:'Bitcoin alcanza su ATH histórico. Todo el mundo habla de cripto. ¡Manías!'},
+   en:{title:'Bitcoin: €16,000!',body:'Bitcoin hits historical ATH. Everyone is talking crypto. Pure mania!'},
+   effect:{btc:0.2,eth:0.3}},
+  {y:2018,m:1,id:'crypto_crash',emoji:'📉',
+   es:{title:'Gran Cripto-Crash',body:'El mercado cripto colapsa. BTC pierde el 80% en meses. HODLers aguantan.'},
+   en:{title:'Great Crypto Crash',body:'Crypto market collapses. BTC loses 80% in months. HODLers hold on.'},
+   effect:{btc:-0.5,eth:-0.6,solana:-0.5}},
+  {y:2020,m:3,id:'covid',emoji:'🦠',
+   es:{title:'COVID-19: Crash Global',body:'La pandemia paraliza el mundo. Los mercados caen en picado. ¡Todo se desploma!'},
+   en:{title:'COVID-19: Global Crash',body:'Pandemic paralyzes the world. Markets plunge. Everything crashes!'},
+   effect:{sp500:-0.35,btc:-0.4,eth:-0.4,apple:-0.2,gold:0.05}},
+  {y:2020,m:11,id:'covid_vaccine',emoji:'💉',
+   es:{title:'Vacuna COVID aprobada',body:'Pfizer anuncia vacuna. Los mercados se recuperan con fuerza. ¡Bull run!'},
+   en:{title:'COVID Vaccine Approved',body:'Pfizer announces vaccine. Markets recover strongly. Bull run!'},
+   effect:{sp500:0.15,btc:0.2,apple:0.1}},
+  {y:2021,m:4,id:'btc_50k',emoji:'🌕',
+   es:{title:'Bitcoin: ¡€50.000!',body:'Bitcoin supera los €50.000 por primera vez. Elon Musk tuitea cripto constantemente.'},
+   en:{title:'Bitcoin: €50,000!',body:'Bitcoin surpasses €50,000 for the first time. Elon Musk tweets crypto constantly.'},
+   effect:{btc:0.1,eth:0.12,solana:0.2}},
+  {y:2022,m:2,id:'ukraine',emoji:'⚔️',
+   es:{title:'Guerra en Ucrania',body:'Rusia invade Ucrania. El petróleo y el gas se disparan. El oro sube como refugio.'},
+   en:{title:'War in Ukraine',body:'Russia invades Ukraine. Oil and gas spike. Gold surges as safe haven.'},
+   effect:{sp500:-0.1,gold:0.15,btc:-0.08}},
+  {y:2022,m:11,id:'ftx',emoji:'💀',
+   es:{title:'Colapso de FTX',body:'El exchange FTX de Sam Bankman-Fried quiebra. Escándalo masivo. El cripto colapsa.'},
+   en:{title:'FTX Collapse',body:'Sam Bankman-Fried\'s FTX exchange collapses. Massive scandal. Crypto collapses.'},
+   effect:{btc:-0.3,eth:-0.35,solana:-0.6}},
+  {y:2023,m:3,id:'svb',emoji:'🏦',
+   es:{title:'Quiebra Silicon Valley Bank',body:'SVB colapsa. Crisis bancaria en EEUU. Bitcoin sube paradójicamente como refugio.'},
+   en:{title:'Silicon Valley Bank Fails',body:'SVB collapses. US banking crisis. Bitcoin paradoxically rises as refuge.'},
+   effect:{sp500:-0.05,btc:0.2,gold:0.06}},
+  {y:2024,m:1,id:'btc_etf',emoji:'📋',
+   es:{title:'ETF de Bitcoin aprobado en EEUU',body:'La SEC aprueba los ETFs spot de Bitcoin. Wall Street entra al mercado cripto.'},
+   en:{title:'Bitcoin ETF Approved in US',body:'SEC approves Bitcoin spot ETFs. Wall Street enters the crypto market.'},
+   effect:{btc:0.25,eth:0.1}},
+  {y:2024,m:4,id:'btc_halving',emoji:'⛏',
+   es:{title:'Halving de Bitcoin',body:'La recompensa de minar BTC se reduce a la mitad. La escasez impulsa el precio.'},
+   en:{title:'Bitcoin Halving',body:'Bitcoin mining reward halves. Scarcity drives the price up.'},
+   effect:{btc:0.15}},
+  {y:2025,m:1,id:'trump',emoji:'🦅',
+   es:{title:'Trump vuelve a la presidencia',body:'Trump regresa a la Casa Blanca. Promete regular favorablemente las criptos. Bitcoin se dispara.'},
+   en:{title:'Trump Returns to Presidency',body:'Trump returns to the White House. Promises favorable crypto regulation. Bitcoin surges.'},
+   effect:{btc:0.2,sp500:0.05}},
+  {y:2026,m:1,id:'ai_boom',emoji:'🤖',
+   es:{title:'Boom de la IA en 2026',body:'Las empresas de IA alcanzan valoraciones récord. El S&P500 es impulsado por el sector tech.'},
+   en:{title:'2026 AI Boom',body:'AI companies reach record valuations. S&P500 driven by tech sector.'},
+   effect:{sp500:0.08,apple:0.1}},
+];
+
+// ═══════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════
+const SAVE_KEY='jogonia_v3_save';
+let G = defaultState();
+function defaultState(){
+  return {
+    year:2008,month:1,day:1,
+    money:50,
+    portfolio:{btc:0,eth:0,gold:0,sp500:0,apple:0,tesla:0,solana:0},
+    items:{pc:false,phone:false,rig:false,server:false,smarthome:false},
+    businesses:[],          // [{name,cost,income}]
+    ownedHouses:['parents'],
+    wanted:0,
+    jailed:false,
+    lang:'es',
+    speed:1,                // days/real-sec
+    paused:false,
+    firedEvents:new Set(),  // event ids already fired
+    eventLog:[],            // [{date,title,body}]
+    passiveIncome:0,        // daily passive income
+    totalEarned:0,
+    totalSpent:0,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SAVE / LOAD  (window.storage — works in Claude chat)
+// ═══════════════════════════════════════════════════════════
+async function saveGame(silent){
+  try{
+    const data={...G,firedEvents:[...G.firedEvents]};
+    await window.storage.set(SAVE_KEY,JSON.stringify(data),false);
+    if(!silent)toast(t('saved'),'g');
+  }catch(e){
+    if(!silent)toast(t('save_error'),'r');
+  }
+}
+async function loadGame(){
+  try{
+    const r=await window.storage.get(SAVE_KEY,false);
+    if(r&&r.value){
+      const d=JSON.parse(r.value);
+      d.firedEvents=new Set(d.firedEvents||[]);
+      G=d; lang=G.lang||'es';
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function deleteSave(){
+  try{await window.storage.delete(SAVE_KEY,false);}catch(e){}
+}
+async function checkSaveExists(){
+  try{
+    const r=await window.storage.get(SAVE_KEY,false);
+    return r&&r.value;
+  }catch(e){return false;}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  JOBS
+// ═══════════════════════════════════════════════════════════
+const JOBS=[
+  {id:'dogs',  es:'Pasear perros',  en:'Dog walking',     emoji:'🐕', base:[15,35],  req:null,       unlock:2008},
+  {id:'lawn',  es:'Cortar césped',  en:'Lawn mowing',     emoji:'🌿', base:[20,50],  req:null,       unlock:2008},
+  {id:'pizza', es:'Repartir pizza', en:'Pizza delivery',  emoji:'🍕', base:[25,55],  req:null,       unlock:2008},
+  {id:'car',   es:'Lavar coches',   en:'Car washing',     emoji:'🚗', base:[20,40],  req:null,       unlock:2008},
+  {id:'market',es:'Vender en mercado',en:'Market vendor', emoji:'🛒', base:[30,80],  req:null,       unlock:2008},
+  {id:'guard', es:'Guardia de seguridad',en:'Security guard',emoji:'🛡',base:[40,90],req:null,     unlock:2010},
+  {id:'code',  es:'Programar webs', en:'Web dev',         emoji:'💻', base:[80,220], req:'pc',       unlock:2009},
+  {id:'mine',  es:'Minar Bitcoin',  en:'Mine Bitcoin',    emoji:'⛏', base:[0,0],    req:'btc_exists',unlock:2009,special:'mine'},
+  {id:'mine2', es:'Mining Rig',     en:'Mining Rig',      emoji:'🖥', base:[0,0],    req:'rig',      unlock:2013,special:'rig_mine'},
+  {id:'trade', es:'Day trading',    en:'Day trading',     emoji:'📈', base:[0,0],    req:'pc',       unlock:2010,special:'trade'},
+  {id:'uber',  es:'Conductor Uber', en:'Uber driver',     emoji:'🚕', base:[50,120], req:'phone',    unlock:2014},
+  {id:'infl',  es:'Influencer',     en:'Influencer',      emoji:'📱', base:[20,500], req:'phone',    unlock:2017,special:'influencer'},
+  {id:'ai',    es:'Consultor IA',   en:'AI consultant',   emoji:'🤖', base:[200,600],req:'pc',       unlock:2023},
+  {id:'defi',  es:'Yield Farming',  en:'Yield Farming',   emoji:'🌾', base:[0,0],    req:'eth_exists',unlock:2020,special:'defi'},
+  {id:'remote',es:'Trabajo remoto', en:'Remote work',     emoji:'🏠', base:[100,300],req:'pc',       unlock:2020},
+  {id:'server_inc',es:'Servidor en la nube',en:'Cloud server',emoji:'☁️',base:[0,0],req:'server',  unlock:2015,special:'server'},
+];
+
+function getJobPay(job){
+  if(job.special)return null;
+  const yearBonus=(G.year-2008)*2.2;
+  return [
+    Math.round(job.base[0]+yearBonus),
+    Math.round(job.base[1]+yearBonus*1.5)
+  ];
+}
+
+function jobAvailable(job){
+  if(G.year<job.unlock)return false;
+  if(job.req==='pc'&&!G.items.pc)return false;
+  if(job.req==='phone'&&!G.items.phone)return false;
+  if(job.req==='rig'&&!G.items.rig)return false;
+  if(job.req==='server'&&!G.items.server)return false;
+  if(job.req==='btc_exists'&&!assetAvailable('btc',G.year,G.month))return false;
+  if(job.req==='eth_exists'&&!assetAvailable('eth',G.year,G.month))return false;
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HOUSES
+// ═══════════════════════════════════════════════════════════
+const HOUSES=[
+  {id:'parents',  es:'Casa Padres',    en:'Parents House', emoji:'🏚', price:0,      color:'#6b4f2a',mx:5, my:5},
+  {id:'flat',     es:'Piso Compartido',en:'Shared Flat',   emoji:'🏠', price:800,    color:'#4a6a7a',mx:16,my:3},
+  {id:'chalet',   es:'Chalet Adosado', en:'Semi-detached', emoji:'🏡', price:3500,   color:'#3a6a3a',mx:4, my:16},
+  {id:'mansion',  es:'Mansión',        en:'Mansion',       emoji:'🏰', price:15000,  color:'#8a6a1a',mx:20,my:16},
+  {id:'pent',     es:'Penthouse',      en:'Penthouse',     emoji:'🌆', price:40000,  color:'#3a1a7a',mx:14,my:9},
+  {id:'island',   es:'Isla Privada',   en:'Private Island',emoji:'🏝', price:120000, color:'#1a6a5a',mx:24,my:21},
+  {id:'casino',   es:'Casino Propio',  en:'Own Casino',    emoji:'🎰', price:300000, color:'#7a1a1a',mx:10,my:21},
+];
+
+function hName(h){return h[lang]||h.es;}
+
+// ═══════════════════════════════════════════════════════════
+//  CANVAS / MAP
+// ═══════════════════════════════════════════════════════════
+const TILE=34,MW=30,MH=24;
+let canvas,ctx2d,camX=0,camY=0;
+let pl={x:7,y:8,anim:0};
+let keys={};
+let lastT=0,moveDel=0;
+let gameRunning=false;
+
+const MAP=buildMap();
+function buildMap(){
+  const m=[];
+  for(let y=0;y<MH;y++){
+    m[y]=[];
+    for(let x=0;x<MW;x++){
+      if(x===0||y===0||x===MW-1||y===MH-1){m[y][x]=1;continue;}
+      const r=Math.random();
+      if(r<.08)m[y][x]=3;
+      else if(r<.11)m[y][x]=4;
+      else if(r<.16)m[y][x]=2;
+      else m[y][x]=0;
+    }
+  }
+  HOUSES.forEach(h=>{
+    const cx=Math.min(h.mx,MW-2),cy=Math.min(h.my,MH-2);
+    m[cy][cx]=5;
+    for(let i=1;i<5;i++){if(cy+i<MH-1)m[cy+i][cx]=2;if(cx+i<MW-1)m[cy][cx+i]=2;}
+  });
+  return m;
+}
+function solid(x,y){if(x<0||x>=MW||y<0||y>=MH)return true;return MAP[y][x]===1||MAP[y][x]===3||MAP[y][x]===5;}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function resize(){
+  const w=document.getElementById('map-wrap');
+  canvas.width=w.clientWidth;canvas.height=w.clientHeight;
+}
+
+function draw(dt){
+  const W=canvas.width,H=canvas.height;
+  ctx2d.clearRect(0,0,W,H);
+  const tx=pl.x*TILE-W/2+TILE/2,ty=pl.y*TILE-H/2+TILE/2;
+  camX+=(tx-camX)*.16;camY+=(ty-camY)*.16;
+  const ox=-Math.round(camX),oy=-Math.round(camY);
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){
+    const px=x*TILE+ox,py=y*TILE+oy;
+    if(px<-TILE||px>W||py<-TILE||py>H)continue;
+    drawTile(px,py,MAP[y][x],x,y);
+  }
+  HOUSES.forEach(h=>{
+    const cx=Math.min(h.mx,MW-2),cy=Math.min(h.my,MH-2);
+    const px=cx*TILE+ox,py=cy*TILE+oy;
+    if(px<-80||px>W+60||py<-80||py>H+60)return;
+    drawHouse(px,py,h,G.ownedHouses.includes(h.id));
+  });
+  if(G.wanted>=3){
+    const s=Date.now()/1000;
+    drawCop((Math.sin(s*.7)*5+pl.x|0)*TILE+ox,(Math.cos(s*.5)*5+pl.y|0)*TILE+oy);
+  }
+  pl.anim+=dt;drawPlayer(pl.x*TILE+ox,pl.y*TILE+oy);
+  HOUSES.forEach(h=>{
+    const cx=Math.min(h.mx,MW-2),cy=Math.min(h.my,MH-2);
+    if(Math.abs(pl.x-cx)<=1&&Math.abs(pl.y-cy)<=1){
+      const px=cx*TILE+ox+TILE/2,py=cy*TILE+oy-6;
+      ctx2d.fillStyle='rgba(0,0,0,.8)';ctx2d.fillRect(px-60,py-18,120,22);
+      ctx2d.fillStyle=G.ownedHouses.includes(h.id)?'#ffd700':'#00ff41';
+      ctx2d.font='7px "Press Start 2P"';ctx2d.textAlign='center';
+      ctx2d.fillText(h.emoji+' '+hName(h).substring(0,12),px,py-2);ctx2d.textAlign='left';
+    }
+  });
+  // Paused overlay
+  if(G.paused){
+    ctx2d.fillStyle='rgba(0,0,0,.5)';ctx2d.fillRect(0,0,W,H);
+    ctx2d.fillStyle=G.lang==='es'?'#ffd700':'#ffd700';
+    ctx2d.font='14px "Press Start 2P"';ctx2d.textAlign='center';
+    ctx2d.fillText(t('paused'),W/2,H/2);ctx2d.textAlign='left';
+  }
+}
+
+function drawTile(px,py,t2,x,y){
+  const c=ctx2d;
+  if(t2===0){c.fillStyle='#2a5a2a';c.fillRect(px,py,TILE,TILE);c.fillStyle='#367a36';c.fillRect(px+4,py+TILE-10,3,8);c.fillRect(px+16,py+TILE-12,3,10);c.fillRect(px+27,py+TILE-9,3,7);}
+  else if(t2===1){const w=Math.sin(Date.now()*.002+x+y*.5)*3;c.fillStyle='#1a4a8a';c.fillRect(px,py,TILE,TILE);c.fillStyle='#2a6ab0';c.fillRect(px,py+8+w,TILE,5);c.fillRect(px,py+20+w,TILE,5);}
+  else if(t2===2){c.fillStyle='#7a6040';c.fillRect(px,py,TILE,TILE);c.fillStyle='#8a7050';c.fillRect(px+3,py+TILE/2-2,TILE-6,4);}
+  else if(t2===3){c.fillStyle='#3a2010';c.fillRect(px+TILE/2-4,py+TILE/2,8,TILE/2);c.fillStyle='#1a4a10';c.beginPath();c.arc(px+TILE/2,py+TILE*.36,TILE*.42,0,Math.PI*2);c.fill();c.fillStyle='#2a6a20';c.beginPath();c.arc(px+TILE/2,py+TILE*.3,TILE*.28,0,Math.PI*2);c.fill();}
+  else if(t2===4){c.fillStyle='#2a5a2a';c.fillRect(px,py,TILE,TILE);c.fillStyle='#ff88cc';c.fillRect(px+TILE/2-4,py+TILE/2-4,8,8);}
+  else{c.fillStyle='#2a4a2a';c.fillRect(px,py,TILE,TILE);}
+}
+
+function drawHouse(px,py,h,owned){
+  const S=TILE,c=ctx2d;
+  c.fillStyle='rgba(0,0,0,.3)';c.fillRect(px+8,py+S*1.7+2,S*1.8,8);
+  c.fillStyle=h.color;c.fillRect(px,py+S*.4,S*1.8,S*1.3);
+  c.fillStyle=owned?'#cc3300':'#552200';
+  c.beginPath();c.moveTo(px-8,py+S*.4);c.lineTo(px+S*.9,py-12);c.lineTo(px+S*1.8+8,py+S*.4);c.closePath();c.fill();
+  c.fillStyle=owned?'#ffffa0':'#223';
+  c.fillRect(px+5,py+S*.55,14,12);c.fillRect(px+S-4,py+S*.55,14,12);
+  c.fillStyle='#4a2808';c.fillRect(px+S*.5-8,py+S*1.08,16,S*.62);
+  c.fillStyle='#ffd700';c.fillRect(px+S*.5+3,py+S*1.22,3,3);
+  if(owned){c.fillStyle='#ffd700';c.fillRect(px+S*.85,py-22,3,22);c.fillStyle='#ff4400';c.fillRect(px+S*.88,py-20,12,8);}
+  c.font=`${S*.52}px serif`;c.textAlign='center';c.fillText(h.emoji,px+S*.9,py+S*.35);c.textAlign='left';
+}
+
+function drawPlayer(px,py){
+  const S=TILE,c=ctx2d,b=Math.sin(pl.anim*6)*2,lg=Math.sin(pl.anim*9)*5;
+  c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(px+S/2,py+S-3,10,5,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#224488';c.fillRect(px+S/2-9,py+S*.58+lg,8,S*.38);c.fillRect(px+S/2+1,py+S*.58-lg,8,S*.38);
+  c.fillStyle='#cc3333';c.fillRect(px+S/2-11,py+S*.22+b,22,S*.4);
+  c.fillStyle='#f4bc7a';c.fillRect(px+S/2-9,py+S*.05+b,18,18);
+  c.fillStyle='#4a2808';c.fillRect(px+S/2-9,py+S*.05+b,18,5);
+  c.fillStyle='#111';c.fillRect(px+S/2-5,py+S*.12+b,4,4);c.fillRect(px+S/2+2,py+S*.12+b,4,4);
+}
+
+function drawCop(px,py){
+  const S=TILE,c=ctx2d,f=Math.sin(Date.now()*.015)>0;
+  c.fillStyle='#0033aa';c.fillRect(px+S/2-10,py+S*.28,20,S*.35);
+  c.fillStyle='#f4bc7a';c.fillRect(px+S/2-8,py+S*.08,16,16);
+  c.fillStyle='#001a88';c.fillRect(px+S/2-8,py+S*.08,16,5);
+  c.fillStyle=f?'#ff0000':'#0000ff';c.fillRect(px+S/2-5,py+S*.04,4,4);
+  c.fillStyle=f?'#0000ff':'#ff0000';c.fillRect(px+S/2+2,py+S*.04,4,4);
+  c.font='7px "Press Start 2P"';c.fillStyle='#ff0';c.textAlign='center';c.fillText('🚨',px+S/2,py);c.textAlign='left';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME LOOP
+// ═══════════════════════════════════════════════════════════
+let tickInterval=null;
+let timeFrac=0; // fractional days accumulated
+
+function startTickLoop(){
+  if(tickInterval)clearInterval(tickInterval);
+  tickInterval=setInterval(gameTick,200);
+}
+
+function gameTick(){
+  if(!gameRunning||G.paused)return;
+  const daysPerTick=G.speed*0.2;
+  timeFrac+=daysPerTick;
+  while(timeFrac>=1){
+    timeFrac-=1;
+    advanceDay();
+  }
+}
+
+function advanceDay(){
+  G.day++;
+  const dims=[31,28,31,30,31,30,31,31,30,31,30,31];
+  const isLeap=(G.year%4===0&&(G.year%100!==0||G.year%400===0));
+  const maxDay=G.month===2&&isLeap?29:dims[G.month-1];
+  if(G.day>maxDay){G.day=1;G.month++;}
+  if(G.month>12){G.month=1;G.year++;onNewYear();}
+  // Passive income (daily fraction)
+  if(G.passiveIncome>0) G.money+=G.passiveIncome/30;
+  // Server passive income
+  if(G.items.server) G.money+=Math.round(getPrice('btc',G.year,G.month)*0.0001);
+  // Check historical events
+  checkEvents();
+  // Auto-save every 30 game days
+  if(G.day===1||G.day===15)saveGame(true);
+  updateHUD();
+}
+
+function onNewYear(){
+  if(G.year>2026)return;
+  const btcNow=Math.round(G.portfolio.btc*getPrice('btc',G.year,G.month));
+  const ethNow=Math.round(G.portfolio.eth*getPrice('eth',G.year,G.month));
+  const goldNow=Math.round(G.portfolio.gold*getPrice('gold',G.year,G.month));
+  toast(`${t('new_year')} ${G.year} 🎆`,'g');
+  // Slight inflation on money
+  G.money=Math.round(G.money*1.015);
+  // Update passive income from businesses
+  G.passiveIncome=G.businesses.reduce((a,b)=>a+b.income,0)+(G.items.smarthome?2:0);
+}
+
+let pendingEvent=null;
+function checkEvents(){
+  HIST_EVENTS.forEach(ev=>{
+    if(G.firedEvents.has(ev.id))return;
+    if(G.year===ev.y&&G.month===ev.m){
+      G.firedEvents.add(ev.id);
+      fireEvent(ev);
+    }
+  });
+}
+
+function fireEvent(ev){
+  const info=ev[lang]||ev.es;
+  // Apply market effects
+  if(ev.effect){
+    Object.keys(ev.effect).forEach(asset=>{
+      // Just affects price history context - we show the notification
+    });
+    // Apply direct portfolio value effect as a one-time thing
+    if(ev.effect.btc&&G.portfolio.btc>0){
+      const change=Math.round(G.portfolio.btc*getPrice('btc',G.year,G.month)*Math.max(-0.95,ev.effect.btc));
+      G.money+=change;
+      toast(`₿ ${change>=0?'+':''}€${change}`,change>=0?'b':'r');
+    }
+    if(ev.effect.eth&&G.portfolio.eth>0){
+      const change=Math.round(G.portfolio.eth*getPrice('eth',G.year,G.month)*Math.max(-0.95,ev.effect.eth));
+      G.money+=change;
+    }
+    if(ev.effect.sp500&&G.portfolio.sp500>0){
+      const change=Math.round(G.portfolio.sp500*getPrice('sp500',G.year,G.month)*Math.max(-0.95,ev.effect.sp500));
+      G.money+=change;
+    }
+    if(ev.effect.apple&&G.portfolio.apple>0){
+      const change=Math.round(G.portfolio.apple*getPrice('apple',G.year,G.month)*Math.max(-0.95,ev.effect.apple));
+      G.money+=change;
+    }
+    if(ev.effect.gold&&G.portfolio.gold>0){
+      const change=Math.round(G.portfolio.gold*getPrice('gold',G.year,G.month)*Math.max(-0.95,ev.effect.gold));
+      G.money+=change;
+    }
+  }
+  // Log
+  G.eventLog.unshift({date:`${G.year}-${String(G.month).padStart(2,'0')}`,title:ev.emoji+' '+info.title,body:info.body});
+  if(G.eventLog.length>50)G.eventLog.pop();
+  // Show banner
+  showBanner(ev.emoji+' '+info.title,info.body);
+  updateHUD();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HUD
+// ═══════════════════════════════════════════════════════════
+const MONTHS_ES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MONTHS_EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function monthName(m){return (lang==='es'?MONTHS_ES:MONTHS_EN)[m-1]||m;}
+
+function netWorth(){
+  let w=G.money;
+  w+=G.portfolio.btc*getPrice('btc',G.year,G.month);
+  w+=G.portfolio.eth*getPrice('eth',G.year,G.month);
+  w+=G.portfolio.gold*getPrice('gold',G.year,G.month);
+  w+=G.portfolio.sp500*getPrice('sp500',G.year,G.month);
+  w+=G.portfolio.apple*getPrice('apple',G.year,G.month);
+  w+=G.portfolio.tesla*getPrice('tesla',G.year,G.month);
+  w+=G.portfolio.solana*getPrice('solana',G.year,G.month);
+  w+=G.businesses.reduce((a,b)=>a+b.cost,0)*0.8;
+  return Math.round(w);
+}
+
+function updateHUD(){
+  document.getElementById('h-date').textContent=`${G.day} ${monthName(G.month)} ${G.year}`;
+  document.getElementById('h-money').textContent='€'+Math.round(G.money).toLocaleString();
+  document.getElementById('h-btc').textContent=G.portfolio.btc?G.portfolio.btc.toFixed(4)+' ₿':'0';
+  document.getElementById('h-eth').textContent=G.portfolio.eth?G.portfolio.eth.toFixed(3)+' Ξ':'0';
+  document.getElementById('h-gold').textContent=G.portfolio.gold?G.portfolio.gold.toFixed(1)+' oz':'0';
+  document.getElementById('h-sp500').textContent=G.portfolio.sp500?G.portfolio.sp500.toFixed(2):'0';
+  document.getElementById('h-worth').textContent='€'+netWorth().toLocaleString();
+  document.getElementById('h-houses').textContent=G.ownedHouses.length+'/'+HOUSES.length;
+  for(let i=1;i<=5;i++)document.getElementById('s'+i).classList.toggle('on',i<=G.wanted);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════
+function isModalOpen(){return document.getElementById('mo').classList.contains('open');}
+function openModal(title,content,btns){
+  document.getElementById('mtitle').textContent=title;
+  document.getElementById('mcont').innerHTML=content;
+  document.getElementById('mload').style.display='none';
+  const bd=document.getElementById('mbtns');bd.innerHTML='';
+  (btns||[]).forEach(b=>{
+    const el=document.createElement('button');
+    el.className='bb '+(b.cls||'');
+    el.textContent=b.label;
+    if(b.disabled)el.disabled=true;
+    el.onclick=b.fn;
+    bd.appendChild(el);
+  });
+  document.getElementById('mo').classList.add('open');
+}
+function closeModal(){document.getElementById('mo').classList.remove('open');}
+function setLoad(on){document.getElementById('mload').style.display=on?'block':'none';document.getElementById('mcont').style.opacity=on?.3:1;}
+function clearBtns(){document.getElementById('mbtns').innerHTML='';}
+function addBtn(label,fn,cls){
+  const bd=document.getElementById('mbtns');
+  const el=document.createElement('button');el.className='bb '+(cls||'');el.textContent=label;el.onclick=fn;
+  bd.appendChild(el);return el;
+}
+function addOpt(label,fn,cls,disabled){
+  const el=document.createElement('button');
+  el.className='opt '+(cls||'');el.innerHTML=label;el.onclick=fn;
+  if(disabled)el.disabled=true;
+  document.getElementById('mcont').appendChild(el);
+  return el;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST & BANNER
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg,cls=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show '+(cls||'');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.className='',2800);
+}
+
+function showBanner(title,body){
+  document.getElementById('evt-title').textContent=title;
+  document.getElementById('evt-body').textContent=body;
+  const b=document.getElementById('evt-banner');
+  b.classList.add('show');
+}
+function hideBanner(){document.getElementById('evt-banner').classList.remove('show');}
+
+// ═══════════════════════════════════════════════════════════
+//  CLAUDE API
+// ═══════════════════════════════════════════════════════════
+async function ai(prompt){
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:prompt}]})
+    });
+    const d=await r.json();
+    return d.content.map(i=>i.text||'').join('');
+  }catch(e){return null;}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WORK ⚒
+// ═══════════════════════════════════════════════════════════
+async function doWork(){
+  const avail=JOBS.filter(j=>jobAvailable(j));
+  const locked=JOBS.filter(j=>!jobAvailable(j)&&j.unlock<=G.year+3);
+
+  openModal(t('work_menu'),`<div style="font-family:'VT323',monospace;font-size:16px;color:#555;margin-bottom:8px">${t('choose_job')} ${monthName(G.month)} ${G.year}:</div>`,[{label:t('cancel'),fn:closeModal}]);
+
+  avail.forEach(job=>{
+    let desc='';
+    if(job.special==='mine')desc=`BTC @ €${Math.round(getPrice('btc',G.year,G.month)).toLocaleString()}`;
+    else if(job.special==='rig_mine')desc='Mining Rig x5 potencia';
+    else if(job.special==='trade')desc=lang==='es'?'Arriesgado':'Risky';
+    else if(job.special==='influencer')desc=lang==='es'?'Variable':'Variable';
+    else if(job.special==='defi')desc='Yield ETH';
+    else if(job.special==='server')desc=lang==='es'?'Ingresos pasivos':'Passive income';
+    else{const p=getJobPay(job);desc=`€${p[0]}–€${p[1]}`;}
+    addOpt(`${job.emoji} ${job[lang]||job.es} <span style="color:#555">— ${desc}</span>`,()=>execJob(job),'g');
+  });
+
+  if(locked.length){
+    const div=document.createElement('div');
+    div.style.cssText='font-family:VT323,monospace;font-size:16px;color:#333;margin-top:8px;';
+    div.textContent=lang==='es'?'— Próximamente —':'— Coming soon —';
+    document.getElementById('mcont').appendChild(div);
+    locked.forEach(job=>{
+      addOpt(`${job.emoji} ${job[lang]||job.es} <span style="color:#333">— ${t('unlock_year')} ${job.unlock}</span>`,null,'',true);
+    });
+  }
+}
+
+async function execJob(job){
+  document.getElementById('mcont').innerHTML=`<span style="color:#555;font-family:'VT323',monospace;font-size:18px">⚙ Procesando...</span>`;
+  setLoad(true);clearBtns();
+
+  // Special jobs
+  if(job.special==='mine'||job.special==='rig_mine'){
+    const mult=job.special==='rig_mine'?5:1;
+    const btcE=parseFloat((Math.random()*0.04*mult+0.003*mult).toFixed(5));
+    const eurE=Math.round(btcE*getPrice('btc',G.year,G.month));
+    const narr=await ai(`RPG cómico España ${G.year}. El jugador minó ${btcE} BTC (€${eurE}). ${job.special==='rig_mine'?'Tiene un Mining Rig profesional.':''} 3 frases graciosas. Sin asteriscos.`);
+    setLoad(false);
+    document.getElementById('mcont').innerHTML=narr||`⛏ Minaste ${btcE} BTC (€${eurE})`;
+    addBtn(`✅ Cobrar ${btcE} BTC`,()=>{G.portfolio.btc=parseFloat((G.portfolio.btc+btcE).toFixed(5));closeModal();toast(`+${btcE} ₿`,'b');updateHUD();},'g');
+    addBtn(t('close'),closeModal);
+    return;
+  }
+  if(job.special==='trade'){
+    const win=Math.random()<0.52,pct=Math.random()*0.45+0.05;
+    const change=Math.round(G.money*pct*(win?1:-1));
+    const narr=await ai(`RPG cómico España ${G.year}. Day trading. ${win?`Ganó €${change}`:`Perdió €${Math.abs(change)}`}. 3 frases. Sin asteriscos.`);
+    setLoad(false);
+    document.getElementById('mcont').innerHTML=narr||`📈 ${win?'+':'-'}€${Math.abs(change)}`;
+    addBtn(`${win?'✅ Cobrar':'😢 Aceptar'} €${Math.abs(change)}`,()=>{G.money+=change;closeModal();toast(`${win?'+':'-'}€${Math.abs(change)}`,win?'g':'r');updateHUD();},'g');
+    addBtn(t('close'),closeModal);return;
+  }
+  if(job.special==='influencer'){
+    const followers=Math.pow(10,Math.random()*3+1)|0;
+    const earn=Math.floor(followers*(Math.random()*0.1+0.01));
+    const narr=await ai(`RPG cómico España ${G.year}. Influencer en redes sociales. ${followers.toLocaleString()} seguidores, ganó €${earn}. 3 frases graciosas. Sin asteriscos.`);
+    setLoad(false);
+    document.getElementById('mcont').innerHTML=narr||`📱 ${followers.toLocaleString()} seguidores. +€${earn}`;
+    addBtn(`✅ Cobrar €${earn}`,()=>{G.money+=earn;closeModal();toast(`+€${earn} 📱`,'g');updateHUD();},'g');
+    addBtn(t('close'),closeModal);return;
+  }
+  if(job.special==='defi'){
+    const eth=G.portfolio.eth;
+    if(eth<=0){setLoad(false);document.getElementById('mcont').innerHTML=lang==='es'?'No tienes ETH para hacer yield farming.':'You have no ETH for yield farming.';addBtn(t('close'),closeModal);return;}
+    const yield_pct=Math.random()*0.12+0.03;
+    const earn=parseFloat((eth*yield_pct).toFixed(4));
+    const narr=await ai(`RPG cómico ${G.year}. Yield farming DeFi. Tenía ${eth} ETH, ganó ${earn} ETH (${(yield_pct*100).toFixed(1)}% APY). 3 frases. Sin asteriscos.`);
+    setLoad(false);
+    document.getElementById('mcont').innerHTML=narr||`🌾 Yield: +${earn} ETH`;
+    addBtn(`✅ Cobrar ${earn} ETH`,()=>{G.portfolio.eth=parseFloat((G.portfolio.eth+earn).toFixed(4));closeModal();toast(`+${earn} Ξ`,'b');updateHUD();},'g');
+    addBtn(t('close'),closeModal);return;
+  }
+  if(job.special==='server'){
+    const daily=Math.round(getPrice('btc',G.year,G.month)*0.0003*30);
+    setLoad(false);
+    document.getElementById('mcont').innerHTML=`<div style="font-family:'VT323',monospace;font-size:19px">☁️ Tu servidor genera aproximadamente<br><span style="color:#ffd700">€${daily}/mes</span> en ingresos pasivos.<br><br>Ya se está acumulando automáticamente.</div>`;
+    addBtn(t('close'),closeModal);return;
+  }
+
+  // Normal job
+  const pay=getJobPay(job);
+  const earn=Math.floor(Math.random()*(pay[1]-pay[0])+pay[0]);
+  const narr=await ai(`RPG cómico España ${G.year}. El jugador trabajó de "${job[lang]||job.es}" y ganó €${earn}. 3 frases graciosas con emojis. Sin asteriscos ni markdown.`);
+  setLoad(false);
+  document.getElementById('mcont').innerHTML=narr||`${job.emoji} Trabajaste duro. +€${earn}`;
+  G.totalEarned+=earn;
+  addBtn(`✅ ${t('collect')} €${earn}`,()=>{G.money+=earn;closeModal();toast(`+€${earn} 💰`,'');updateHUD();},'g');
+  addBtn(t('close'),closeModal);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MARKET 📊
+// ═══════════════════════════════════════════════════════════
+function doMarket(){
+  const assets=[
+    {id:'btc',name:'Bitcoin ₿',req:'btc'},
+    {id:'eth',name:'Ethereum Ξ',req:'eth'},
+    {id:'solana',name:'Solana ◎',req:'solana'},
+    {id:'gold',name:'Oro 🥇',req:null},
+    {id:'sp500',name:'S&P 500 📊',req:null},
+    {id:'apple',name:'Apple 🍎',req:'pc'},
+    {id:'tesla',name:'Tesla ⚡',req:'pc'},
+  ];
+
+  let html=`<table class="tbl"><thead><tr><th>${t('qty')}</th><th>${t('price')}</th><th>${t('value')}</th><th>${t('change')}</th></tr></thead><tbody>`;
+  assets.forEach(a=>{
+    const avail=assetAvailable(a.id,G.year,G.month);
+    const p=avail?Math.round(getPrice(a.id,G.year,G.month)):null;
+    const qty=G.portfolio[a.id]||0;
+    const val=p?Math.round(qty*p):0;
+    const pPrev=avail?getPrice(a.id,G.year,G.month===1?G.year-1:G.year,G.month===1?12:G.month-1):null;
+    const chg=pPrev&&p?((p-pPrev)/pPrev*100).toFixed(1):null;
+    html+=`<tr><td style="color:#ffd700">${a.name}<br><span style="font-size:14px;color:#888">${qty?qty.toFixed?qty.toFixed(4):qty:'0'}</span></td>
+      <td class="coin">${p?'€'+p.toLocaleString():lang==='es'?'No disp.':'N/A'}</td>
+      <td>${val?'€'+val.toLocaleString():'—'}</td>
+      <td class="${chg>0?'up':chg<0?'dn':''}">${chg?(chg>0?'+':'')+chg+'%':'—'}</td></tr>`;
+  });
+  html+=`</tbody></table>`;
+  html+=`<div style="font-family:'VT323',monospace;font-size:16px;color:#555;margin-top:8px">${t('net_worth')}: <span style="color:#ffd700">€${netWorth().toLocaleString()}</span></div>`;
+
+  const btns=[{label:t('close'),fn:closeModal}];
+  if(G.items.pc){
+    btns.unshift({label:lang==='es'?'📊 Invertir':'📊 Invest',fn:openInvestMenu,cls:'b'});
+    btns.unshift({label:lang==='es'?'🏢 Negocios':'🏢 Businesses',fn:openBusinessMenu,cls:'p'});
+  } else {
+    btns.unshift({label:lang==='es'?'🛒 Comprar & Vender':'🛒 Buy & Sell',fn:openInvestMenu,cls:'b'});
+  }
+  openModal(t('market_menu'),html,btns);
+}
+
+function openInvestMenu(){
+  const assets=[
+    {id:'btc',name:'Bitcoin ₿',unit:'BTC'},
+    {id:'eth',name:'Ethereum Ξ',unit:'ETH'},
+    {id:'solana',name:'Solana ◎',unit:'SOL'},
+    {id:'gold',name:'Oro 🥇',unit:'oz'},
+    {id:'sp500',name:'S&P 500 📊',unit:'unit'},
+    {id:'apple',name:'Apple 🍎',unit:'acc'},
+    {id:'tesla',name:'Tesla ⚡',unit:'acc'},
+  ];
+  let html='<div style="font-family:VT323,monospace;font-size:16px;color:#555;margin-bottom:6px">'+
+    `${t('money')}: <span style="color:#ffd700">€${Math.round(G.money).toLocaleString()}</span></div>`;
+  openModal(lang==='es'?'📈 INVERTIR':'📈 INVEST',html,[{label:'↩',fn:doMarket}]);
+  assets.forEach(a=>{
+    if(!assetAvailable(a.id,G.year,G.month)){
+      addOpt(`${a.name} — <span style="color:#333">${lang==='es'?'No disponible aún':'Not available yet'}</span>`,null,'',true);
+    } else {
+      const p=Math.round(getPrice(a.id,G.year,G.month)*100)/100;
+      const qty=G.portfolio[a.id]||0;
+      addOpt(`${a.name} <span style="color:#555">€${p.toLocaleString()}/u${qty>0?' · tienes '+qty.toFixed(4):''}</span>`,()=>openAssetTrade(a,p));
+    }
+  });
+}
+
+function openAssetTrade(a,p){
+  const qty=G.portfolio[a.id]||0;
+  const amts=a.id==='btc'?[0.01,0.1,1,10]:a.id==='eth'?[0.1,1,10,100]:a.id==='solana'?[1,10,100]:a.id==='gold'?[0.1,1,10]:[1,5,20,100];
+  let html=`<div style="font-family:VT323,monospace;font-size:20px;color:#ffd700;margin-bottom:8px">${a.name}</div>
+    <div style="font-family:VT323,monospace;font-size:18px;margin-bottom:8px">
+    ${t('price')}: <span style="color:#ffd700">€${p.toLocaleString()}</span> — ${t('qty')}: <span style="color:#00ff41">${qty.toFixed?qty.toFixed(4):qty}</span>
+    </div>`;
+  openModal(`${a.name}`,html,[{label:'↩',fn:openInvestMenu}]);
+  amts.forEach(amt=>{
+    const cost=Math.round(p*amt*100)/100;
+    const canBuy=G.money>=cost;
+    addOpt(`${t('buy')} ${amt} — €${cost.toLocaleString()}`,()=>{
+      if(G.money<cost){toast(t('no_funds'),'r');return;}
+      G.money-=cost;G.portfolio[a.id]=parseFloat(((G.portfolio[a.id]||0)+amt).toFixed(6));
+      toast(`+${amt} ${a.unit}. -€${cost.toLocaleString()}`,'b');updateHUD();openAssetTrade(a,p);
+    },'g',!canBuy);
+  });
+  if(qty>0){
+    const sellVal=Math.round(qty*p);
+    addOpt(`💶 ${t('sell')} ${t('divest')} → €${sellVal.toLocaleString()}`,()=>{
+      G.money+=sellVal;G.portfolio[a.id]=0;
+      toast(`+€${sellVal.toLocaleString()} 💶`,'g');updateHUD();openInvestMenu();
+    },'r');
+  }
+}
+
+function openBusinessMenu(){
+  const bizOptions=[
+    {id:'kiosk',es:'Kiosco',en:'Kiosk',cost:500,income:15,emoji:'📰',unlock:2008},
+    {id:'bar',es:'Bar',en:'Bar',cost:2000,income:60,emoji:'🍺',unlock:2009},
+    {id:'laundry',es:'Lavandería',en:'Laundry',cost:3500,income:90,emoji:'👕',unlock:2010},
+    {id:'gym',es:'Gimnasio',en:'Gym',cost:8000,income:200,emoji:'💪',unlock:2012},
+    {id:'cafe',es:'Cafetería',en:'Café',cost:5000,income:130,emoji:'☕',unlock:2011},
+    {id:'parking',es:'Parking',en:'Parking',cost:15000,income:400,emoji:'🅿️',unlock:2013},
+    {id:'restaurant',es:'Restaurante',en:'Restaurant',cost:20000,income:600,emoji:'🍽️',unlock:2014},
+    {id:'hotel',es:'Hotel',en:'Hotel',cost:50000,income:1500,emoji:'🏨',unlock:2016},
+    {id:'tech',es:'Startup Tech',en:'Tech Startup',cost:100000,income:3000,emoji:'🚀',unlock:2018},
+    {id:'mining_farm',es:'Crypto Farm',en:'Crypto Farm',cost:200000,income:8000,emoji:'⛏',unlock:2020},
+  ];
+  const owned=G.businesses.map(b=>b.id);
+  let html=`<div style="font-family:VT23,monospace;font-size:16px;color:#555;margin-bottom:8px">${lang==='es'?'Ingresos pasivos diarios':'Daily passive income'}: <span style="color:#00ff41">€${G.passiveIncome.toFixed(0)}/día</span></div>`;
+  openModal(lang==='es'?'🏢 NEGOCIOS':'🏢 BUSINESSES',html,[{label:'↩',fn:doMarket}]);
+  bizOptions.forEach(biz=>{
+    if(G.year<biz.unlock){addOpt(`${biz.emoji} ${biz[lang]||biz.es} <span style="color:#333">— ${t('unlock_year')} ${biz.unlock}</span>`,null,'',true);return;}
+    if(owned.includes(biz.id)){addOpt(`${biz.emoji} ${biz[lang]||biz.es} <span style="color:#00ff41">✅ +€${biz.income}/día</span>`,null,'g',true);return;}
+    const can=G.money>=biz.cost;
+    addOpt(`${biz.emoji} ${biz[lang]||biz.es} <span style="color:#555">€${biz.cost.toLocaleString()} → +€${biz.income}/día</span>`,()=>{
+      if(G.money<biz.cost){toast(t('no_funds'),'r');return;}
+      G.money-=biz.cost;G.businesses.push({...biz});
+      G.passiveIncome=G.businesses.reduce((a,b)=>a+b.income,0);
+      toast(`🏢 +${biz[lang]||biz.es} +€${biz.income}/día`,'g');updateHUD();openBusinessMenu();
+    },'p',!can);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CRIME 🔪
+// ═══════════════════════════════════════════════════════════
+async function doCrime(){
+  let html=`<div style="font-family:VT323,monospace;font-size:17px;color:#ff4444;margin-bottom:8px">⭐ ${G.wanted}/5 — ${lang==='es'?'A 5 estrellas vas a la cárcel':'5 stars = jail'}</div>`;
+  openModal(t('crime_menu'),html,[{label:t('cancel'),fn:closeModal}]);
+  const crimes=[
+    {id:'rob_house',label:t('robHouse'),reward:[150,600],risk:0.35,stars:1,needsPC:false},
+    {id:'rob_npc',label:t('robNPC'),reward:[30,150],risk:0.25,stars:1,needsPC:false},
+    {id:'hack',label:t('hackPc'),reward:[300,1200],risk:0.45,stars:1,needsPC:true},
+    {id:'robbery',label:t('robbery'),reward:[500,2000],risk:0.55,stars:2,needsPC:false},
+    {id:'fraud',label:lang==='es'?'💳 Fraude online':'💳 Online fraud',reward:[800,3000],risk:0.5,stars:2,needsPC:true,unlock:2012},
+    {id:'crypto_scam',label:lang==='es'?'🪙 Crypto scam':'🪙 Crypto scam',reward:[2000,8000],risk:0.6,stars:3,needsPC:true,unlock:2017},
+  ];
+  crimes.forEach(c=>{
+    if(c.unlock&&G.year<c.unlock){addOpt(`${c.label} <span style="color:#333">— ${t('unlock_year')} ${c.unlock}</span>`,null,'',true);return;}
+    if(c.needsPC&&!G.items.pc){addOpt(`${c.label} <span style="color:#333">— ${t('no_pc')}</span>`,null,'',true);return;}
+    addOpt(`${c.label} <span style="color:#555">€${c.reward[0]}–€${c.reward[1]} • ${Math.round((1-c.risk)*100)}% éxito</span>`,()=>execCrime(c),'r');
+  });
+}
+
+async function execCrime(crime){
+  document.getElementById('mcont').innerHTML=`<span style="color:#555;font-family:'VT323',monospace;font-size:18px">⚙ Ejecutando...</span>`;
+  setLoad(true);clearBtns();
+  const adjRisk=crime.risk+G.wanted*0.1;
+  const success=Math.random()>adjRisk;
+  const earn=success?Math.floor(Math.random()*(crime.reward[1]-crime.reward[0])+crime.reward[0]):0;
+  const narr=await ai(`RPG cómico España ${G.year}. El jugador intentó "${crime.label}" y ${success?`consiguió €${earn}`:'fue pillado por la policía'}. 3 frases graciosas. Sin asteriscos.`);
+  setLoad(false);
+  document.getElementById('mcont').innerHTML=narr||`${success?`✅ +€${earn}`:'🚔 ¡Pillado!'}`;
+  clearBtns();
+  if(success){
+    G.money+=earn;G.wanted=Math.min(5,G.wanted+crime.stars);
+    addBtn(`✅ €${earn}`,()=>{closeModal();toast(`+€${earn} 💰`,'');updateHUD();},'r');
+  } else {
+    G.wanted=Math.min(5,G.wanted+crime.stars+1);
+    addBtn(t('accept'),()=>{closeModal();updateHUD();},'r');
+  }
+  checkArrested();
+  updateHUD();
+}
+
+function checkArrested(){
+  if(G.wanted>=5&&!G.jailed){
+    G.jailed=true;
+    const fine=Math.min(Math.round(G.money*0.5),10000);
+    G.money=Math.max(0,G.money-fine);
+    G.wanted=0;
+    setTimeout(()=>{
+      openModal(t('arrested'),
+        `<div style="font-family:VT323,monospace;font-size:22px;color:#ff3333;line-height:1.6">
+        ${t('jail_msg')} <span style="color:#ffd700">€${fine.toLocaleString()}</span><br><br>
+        ${t('jail_year')}<br><br>
+        ${lang==='es'?`Sales en ${G.year+1}...`:`Released in ${G.year+1}...`}
+        </div>`,
+        [{label:lang==='es'?'😔 Cumplir condena':'😔 Serve time',fn:()=>{
+          G.jailed=false;G.wanted=0;
+          // Advance 1 year
+          G.year++;
+          closeModal();updateHUD();toast(lang==='es'?`Saliste de la cárcel. ${G.year}`:`Released. ${G.year}`,'r');
+        },cls:'r'}]
+      );
+    },500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HOUSES 🏘
+// ═══════════════════════════════════════════════════════════
+function doHouses(){
+  let html='';
+  HOUSES.forEach(h=>{
+    const owned=G.ownedHouses.includes(h.id);
+    const can=!owned&&G.money>=h.price&&h.price>0;
+    html+=`<div style="background:#0e0e0e;border:2px solid ${owned?'#7a5a00':can?'#004400':'#1e1e1e'};padding:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div style="font-family:VT323,monospace;">
+        <div style="font-size:12px;color:${owned?'#ffd700':'#e0ddd0'};font-family:'Press Start 2P',monospace;">${h.emoji} ${hName(h)}</div>
+        <div style="font-size:19px;color:${owned?'#00ff88':'#ffd700'}">${owned?t('own'):(h.price?'€'+h.price.toLocaleString():lang==='es'?'Inicio':'Start')}</div>
+        ${!owned&&!can&&h.price?`<div style="font-size:14px;color:#555">${t('needed')}: €${(h.price-Math.round(G.money)).toLocaleString()}</div>`:''}
+      </div>
+      <button class="bb ${can?'g':''}" ${owned||!can?'disabled':''} onclick="buyHouse('${h.id}')" style="font-size:7px;">
+        ${owned?t('own'):can?`🛒 ${t('buy')}`:`${t('locked')}`}
+      </button>
+    </div>`;
+  });
+  html+=`<div style="font-family:VT323,monospace;font-size:17px;color:#333;margin-top:6px">${t('net_worth')}: €${netWorth().toLocaleString()}</div>`;
+  openModal(t('house_menu'),html,[{label:t('close'),fn:closeModal}]);
+}
+
+async function buyHouse(id){
+  const h=HOUSES.find(x=>x.id===id);
+  if(!h||G.money<h.price)return;
+  G.money-=h.price;G.ownedHouses.push(id);G.totalSpent+=h.price;
+  closeModal();
+  const narr=await ai(`RPG cómico España ${G.year}. El jugador compró "${hName(h)}" por €${h.price.toLocaleString()}. Celebración épica y graciosa en 3 frases. Sin asteriscos.`);
+  openModal(`🎉 ${hName(h)}`,narr||`¡${h.emoji} ${hName(h)} es tuya!`,[
+    {label:`🎊 ${lang==='es'?'¡Genial!':'Awesome!'}`,fn:()=>{closeModal();updateHUD();toast(`🏠 +${hName(h)}`,'g');},cls:'g'}
+  ]);
+  updateHUD();
+  if(G.ownedHouses.length===HOUSES.length)setTimeout(victory,1500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SHOP 🛒
+// ═══════════════════════════════════════════════════════════
+function doShop(){
+  const items=[
+    {id:'phone',es:'📱 Smartphone',en:'📱 Smartphone',price:150,emoji:'📱',
+     descEs:'Desbloquea Uber, redes sociales',descEn:'Unlocks Uber, social media',unlock:2009},
+    {id:'pc',es:'🖥 Ordenador PC',en:'🖥 Computer',price:300,emoji:'🖥',
+     descEs:'Programar, hackear, invertir',descEn:'Code, hack, invest',unlock:2008},
+    {id:'rig',es:'⛏ Mining Rig',en:'⛏ Mining Rig',price:2000,emoji:'⛏',
+     descEs:'Minar BTC x5 eficiencia',descEn:'Mine BTC x5 efficiency',unlock:2013},
+    {id:'server',es:'☁️ Servidor Farm',en:'☁️ Server Farm',price:15000,emoji:'☁️',
+     descEs:'Ingresos pasivos automáticos',descEn:'Automatic passive income',unlock:2015},
+    {id:'smarthome',es:'🏠 Smart Home',en:'🏠 Smart Home',price:5000,emoji:'🏠',
+     descEs:'+€2/día en calidad de vida',descEn:'+€2/day quality of life',unlock:2018},
+  ];
+  openModal(t('shop_menu'),'<div style="font-family:VT323,monospace;font-size:17px;color:#555;margin-bottom:8px">'+
+    (lang==='es'?'Objetos desbloqueables:':'Unlockable items:')+
+    `</div><div style="font-family:VT323,monospace;font-size:17px;color:#555;margin-bottom:8px">${t('items_owned')}: ${Object.entries(G.items).filter(([k,v])=>v).map(([k])=>k).join(', ')||t('no_items')}</div>`,
+    [{label:t('close'),fn:closeModal}]
+  );
+  items.forEach(item=>{
+    if(G.year<item.unlock){addOpt(`${item.emoji} ${item[lang]||item.es} <span style="color:#333">— ${t('unlock_year')} ${item.unlock}</span>`,null,'',true);return;}
+    if(G.items[item.id]){addOpt(`${item.emoji} ${item[lang]||item.es} <span style="color:#00ff41">✅ ${lang==='es'?'Comprado':'Owned'}</span>`,null,'',true);return;}
+    const can=G.money>=item.price;
+    addOpt(`${item.emoji} ${item[lang]||item.es} <span style="color:#555">€${item.price.toLocaleString()} — ${item['desc'+(lang==='es'?'Es':'En')]}</span>`,()=>{
+      if(G.money<item.price){toast(t('no_funds'),'r');return;}
+      G.money-=item.price;G.items[item.id]=true;
+      toast(`${item.emoji} ${lang==='es'?'Comprado!':'Purchased!'}`, 'b');updateHUD();doShop();
+    },'p',!can);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NEWS 📰
+// ═══════════════════════════════════════════════════════════
+function doNews(){
+  let html='';
+  if(!G.eventLog.length){html=`<div style="font-family:VT323,monospace;font-size:18px;color:#555">${t('no_events')}</div>`;}
+  else{
+    G.eventLog.slice(0,20).forEach(ev=>{
+      html+=`<div style="border-bottom:1px solid #1e1e1e;padding:8px 0;">
+        <div style="font-size:8px;color:#555;">${ev.date}</div>
+        <div style="font-family:VT323,monospace;font-size:17px;color:#ffd700;">${ev.title}</div>
+        <div style="font-family:VT323,monospace;font-size:16px;">${ev.body}</div>
+      </div>`;
+    });
+  }
+  openModal(t('news_menu'),html,[{label:t('close'),fn:closeModal}]);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS ⚙
+// ═══════════════════════════════════════════════════════════
+function doSettings(){
+  const html=`<div style="font-family:VT323,monospace;font-size:19px;line-height:2;">
+    ${t('language')}: <b style="color:#ffd700">${lang==='es'?'Español':'English'}</b><br>
+    ${t('speed')}: <b style="color:#ffd700">${G.speed}x</b><br>
+    PC: <b style="color:${G.items.pc?'#00ff41':'#ff3333'}">${G.items.pc?'✅':'❌'}</b><br>
+    ${lang==='es'?'Año':'Year'}: <b style="color:#ff8800">${G.year}</b><br>
+    ${t('net_worth')}: <b style="color:#00ff41">€${netWorth().toLocaleString()}</b><br>
+    ${lang==='es'?'Total ganado':'Total earned'}: <b style="color:#ffd700">€${G.totalEarned.toLocaleString()}</b>
+  </div>`;
+  openModal(t('settings_menu'),html,[
+    {label:'🌐 '+t('language'),fn:()=>{toggleLang();G.lang=lang;applyLang();closeModal();doSettings();}},
+    {label:t('manual_save'),fn:()=>{saveGame(false);},cls:'g'},
+    {label:t('delete_save'),fn:confirmDelete,cls:'r'},
+    {label:t('close'),fn:closeModal},
+  ]);
+}
+
+function confirmDelete(){
+  openModal(lang==='es'?'⚠️ Confirmar':'⚠️ Confirm',
+    `<div style="font-family:VT323,monospace;font-size:22px;color:#ff3333">${t('confirm_delete')}</div>`,
+    [
+      {label:t('yes_delete'),fn:async()=>{await deleteSave();location.reload();},cls:'r'},
+      {label:t('cancel'),fn:doSettings},
+    ]
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INTERACT (E)
+// ═══════════════════════════════════════════════════════════
+async function interact(){
+  for(const h of HOUSES){
+    const cx=Math.min(h.mx,MW-2),cy=Math.min(h.my,MH-2);
+    if(Math.abs(pl.x-cx)<=1&&Math.abs(pl.y-cy)<=1){
+      await enterHouse(h);return;
+    }
+  }
+  toast(t('not_near'),'');
+}
+
+async function enterHouse(h){
+  const owned=G.ownedHouses.includes(h.id);
+  const can=!owned&&G.money>=h.price&&h.price>0;
+  openModal(`${h.emoji} ${hName(h)}`,`<span style="color:#555;font-family:VT323,monospace;font-size:18px">${lang==='es'?'Cargando...':'Loading...'}</span>`,[]);
+  setLoad(true);
+  const ctx3=owned?(lang==='es'?'vive aquí':'lives here'):(can?(lang==='es'?`quiere comprarla (€${h.price.toLocaleString()})`:`wants to buy it (€${h.price.toLocaleString()})`):(lang==='es'?`sueña con comprarla, solo tiene €${Math.round(G.money)}`:`dreams of buying it, only has €${Math.round(G.money)}`));
+  const narr=await ai(`RPG cómico España ${G.year}. El jugador visita "${hName(h)}": ${ctx3}. 3 frases descriptivas y graciosas. Sin asteriscos.`);
+  setLoad(false);
+  document.getElementById('mcont').innerHTML=narr||`${h.emoji} ${hName(h)}`;
+  clearBtns();
+  if(!owned&&h.price>0){
+    const b=addBtn(can?`🛒 ${t('buy')} (€${h.price.toLocaleString()})`:(`${t('locked')} ${t('needed')} €${(h.price-Math.round(G.money)).toLocaleString()}`),can?()=>buyHouse(h.id):null,can?'g':'');
+    if(!can)b.disabled=true;
+  }
+  addBtn(t('close'),closeModal);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VICTORY
+// ═══════════════════════════════════════════════════════════
+async function victory(){
+  openModal(`🏆 ${t('victory')}`,`<span style="color:#555;font-family:VT323,monospace;font-size:18px">${lang==='es'?'Escribiendo tu legado...':'Writing your legacy...'}</span>`,[]);
+  setLoad(true);
+  const narr=await ai(`RPG cómico España ${G.year}. El jugador compró todas las propiedades (${HOUSES.map(h=>hName(h)).join(', ')}). Patrimonio €${netWorth().toLocaleString()}. Final épico y gracioso en 5 frases. Sin asteriscos.`);
+  setLoad(false);
+  document.getElementById('mcont').innerHTML=`<span style="color:#ffd700;font-family:VT323,monospace;font-size:22px;">${narr||lang==='es'?'¡Eres la leyenda de Jogonía!':'You are the legend of Jogonía!'}</span>`;
+  clearBtns();
+  addBtn(`🔄 ${t('new_game')}`,()=>location.reload(),'g');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SPEED CONTROL
+// ═══════════════════════════════════════════════════════════
+function setSpeed(s){
+  G.speed=s;G.paused=false;
+  [1,7,30].forEach((v,i)=>{
+    const b=document.getElementById('spd'+(i+1));
+    if(b)b.classList.toggle('active',v===s);
+  });
+  const pb=document.getElementById('spd0');if(pb)pb.classList.remove('active');
+}
+function togglePause(){
+  G.paused=!G.paused;
+  const pb=document.getElementById('spd0');
+  if(pb)pb.classList.toggle('active',G.paused);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME MAIN LOOP (canvas)
+// ═══════════════════════════════════════════════════════════
+function gameFrame(ts){
+  const dt=(ts-lastT)/1000;lastT=ts;
+  moveDel-=dt;
+  if(moveDel<=0&&!isModalOpen()){
+    let dx=0,dy=0;
+    if(keys['ArrowLeft']||keys['a'])dx=-1;
+    else if(keys['ArrowRight']||keys['d'])dx=1;
+    else if(keys['ArrowUp']||keys['w'])dy=-1;
+    else if(keys['ArrowDown']||keys['s'])dy=1;
+    if(dx||dy){const nx=pl.x+dx,ny=pl.y+dy;if(!solid(nx,ny)){pl.x=nx;pl.y=ny;moveDel=.13;}}
+    if(keys['e']||keys['E']){keys['e']=false;keys['E']=false;interact();}
+  }
+  resize();draw(dt);
+  requestAnimationFrame(gameFrame);
+}
+document.addEventListener('keydown',e=>keys[e.key]=true);
+document.addEventListener('keyup',e=>keys[e.key]=false);
+
+// Touch
+(function(){
+  let sx,sy;
+  document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(isModalOpen())return;
+    const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)<14&&Math.abs(dy)<14)return;
+    if(Math.abs(dx)>Math.abs(dy)){const k=dx>0?'ArrowRight':'ArrowLeft';keys[k]=true;setTimeout(()=>keys[k]=false,160);}
+    else{const k=dy>0?'ArrowDown':'ArrowUp';keys[k]=true;setTimeout(()=>keys[k]=false,160);}
+  },{passive:true});
+})();
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+async function init(){
+  const hasSave=await checkSaveExists();
+  if(hasSave){
+    document.getElementById('btn-load').style.display='inline-block';
+    document.getElementById('save-info').textContent=lang==='es'?'Partida guardada encontrada':'Save found';
+  }
+}
+
+async function newGame(){
+  G=defaultState();
+  G.firedEvents=new Set();
+  startActualGame();
+}
+
+async function loadAndStart(){
+  const ok=await loadGame();
+  if(ok){startActualGame();}
+  else{newGame();}
+}
+
+function startActualGame(){
+  document.getElementById('title').style.display='none';
+  document.getElementById('game').style.display='flex';
+  canvas=document.getElementById('gc');
+  ctx2d=canvas.getContext('2d');
+  resize();
+  pl.x=7;pl.y=9;
+  lang=G.lang||'es';
+  applyLang();
+  setSpeed(G.speed||1);
+  updateHUD();
+  gameRunning=true;
+  startTickLoop();
+  requestAnimationFrame(ts=>{lastT=ts;requestAnimationFrame(gameFrame);});
+  // Auto-save every 60s
+  setInterval(()=>saveGame(true),60000);
+
+  setTimeout(()=>{
+    openModal(lang==='es'?'🏠 BIENVENIDO A JOGONÍA':'🏠 WELCOME TO JOGONÍA',
+      `<div style="font-family:'VT323',monospace;font-size:19px;line-height:1.8">
+      📅 ${lang==='es'?'Año':'Year'}: <span style="color:#ff8800">2008</span><br>
+      💶 ${lang==='es'?'Dinero inicial':'Starting money'}: <span style="color:#ffd700">€50</span><br><br>
+      ${lang==='es'?
+        `<span style="color:#00ff41">Trabaja</span> para ganar dinero.<br>
+        <span style="color:#44aaff">Compra un PC (€300)</span> en la tienda.<br>
+        Bitcoin tiene precio en <span style="color:#44aaff">2009</span>.<br>
+        Ethereum llega en <span style="color:#44aaff">2015</span>.<br>
+        El tiempo avanza automáticamente.<br>
+        <span style="color:#ff3333">⚠️ 5 estrellas = cárcel.</span>`:
+        `<span style="color:#00ff41">Work</span> to earn money.<br>
+        <span style="color:#44aaff">Buy a PC (€300)</span> at the shop.<br>
+        Bitcoin has price in <span style="color:#44aaff">2009</span>.<br>
+        Ethereum arrives in <span style="color:#44aaff">2015</span>.<br>
+        Time advances automatically.<br>
+        <span style="color:#ff3333">⚠️ 5 stars = jail.</span>`}
+      </div>`,
+      [{label:lang==='es'?'¡A por ello! 💪':'Let\'s go! 💪',fn:closeModal,cls:'g'}]
+    );
+  },700);
+}
+
+// Start
+window.addEventListener('load',init);
+</script>
+</body>
+</html>
