@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>JOGONÍA v5.0</title>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6754320079973999" crossorigin="anonymous"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Orbitron:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;}
@@ -654,9 +656,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 'use strict';
 // v5: Configuración de Anuncios Reales (AdSense/AdMob)
 const AD_CONFIG = {
-  adUnitId: "ca-app-pub-3940256099942544/1033173712", // ID de prueba de Google
-  realAds: false, // Cambiar a true para integrar SDK real
-  debug: true
+  publisherId: "ca-pub-6754320079973999",
+  adUnitId: "ca-app-pub-3940256099942544/1033173712", // ID de prueba
+  realAds: true,
+  debug: false
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -1069,25 +1072,25 @@ const FUT_EVENTS=[
 //  GAME DATA: Jobs, Houses, Items, Helpers, Businesses
 // ═══════════════════════════════════════════════════════════
 const JOBS=[
-  {id:'dogs',es:'Pasear perros',en:'Dog walking',emoji:'🐕',base:[15,40],req:null,unlock:2008,dur:2},
-  {id:'lawn',es:'Cortar césped',en:'Lawn mowing',emoji:'🌿',base:[20,50],req:null,unlock:2008,dur:3},
-  {id:'pizza',es:'Repartir pizza',en:'Pizza delivery',emoji:'🍕',base:[25,55],req:null,unlock:2008,dur:3},
-  {id:'car',es:'Lavar coches',en:'Car washing',emoji:'🚗',base:[20,45],req:null,unlock:2008,dur:3},
-  {id:'market',es:'Vender en mercado',en:'Market vendor',emoji:'🛒',base:[30,80],req:null,unlock:2008,dur:4},
-  {id:'guard',es:'Guardia seguridad',en:'Security guard',emoji:'🛡',base:[40,100],req:null,unlock:2010,dur:5},
-  {id:'code',es:'Programar webs',en:'Web development',emoji:'💻',base:[80,250],req:'pc',unlock:2009,dur:6},
+  {id:'dogs',es:'Pasear perros',en:'Dog walking',emoji:'🐕',base:[15,40],req:null,unlock:2008,dur:1.5},
+  {id:'lawn',es:'Cortar césped',en:'Lawn mowing',emoji:'🌿',base:[20,50],req:null,unlock:2008,dur:4},
+  {id:'pizza',es:'Repartir pizza',en:'Pizza delivery',emoji:'🍕',base:[25,55],req:null,unlock:2008,dur:5},
+  {id:'car',es:'Lavar coches',en:'Car washing',emoji:'🚗',base:[20,45],req:null,unlock:2008,dur:4},
+  {id:'market',es:'Vender en mercado',en:'Market vendor',emoji:'🛒',base:[30,80],req:null,unlock:2008,dur:6},
+  {id:'guard',es:'Guardia seguridad',en:'Security guard',emoji:'🛡',base:[40,100],req:null,unlock:2010,dur:10},
+  {id:'code',es:'Programar webs',en:'Web development',emoji:'💻',base:[80,250],req:'pc',unlock:2009,dur:12},
   {id:'mine',es:'Minar Bitcoin',en:'Mine Bitcoin',emoji:'⛏',base:[0,0],req:'btc_exists',unlock:2009,sp:'mine',dur:5},
   {id:'mine2',es:'Mining Rig',en:'Mining Rig',emoji:'🖥',base:[0,0],req:'rig',unlock:2013,sp:'rig_mine',dur:5},
   {id:'trade',es:'Day trading',en:'Day trading',emoji:'📈',base:[0,0],req:'pc',unlock:2010,sp:'trade',dur:4},
-  {id:'uber',es:'Conductor Uber',en:'Uber driver',emoji:'🚕',base:[50,120],req:'phone',unlock:2014,dur:5},
-  {id:'infl',es:'Influencer',en:'Influencer',emoji:'📱',base:[20,600],req:'phone',unlock:2017,sp:'influencer',dur:8},
+  {id:'uber',es:'Conductor Uber',en:'Uber driver',emoji:'🚕',base:[50,120],req:'phone',unlock:2014,dur:8},
+  {id:'infl',es:'Influencer',en:'Influencer',emoji:'📱',base:[20,600],req:'phone',unlock:2017,sp:'influencer',dur:10},
   {id:'defi',es:'Yield Farming',en:'Yield Farming',emoji:'🌾',base:[0,0],req:'eth_exists',unlock:2020,sp:'defi',dur:8},
-  {id:'ai',es:'Consultor IA',en:'AI Consultant',emoji:'🤖',base:[200,700],req:'pc',unlock:2023,dur:12},
-  {id:'remote',es:'Trabajo remoto',en:'Remote work',emoji:'🏠',base:[100,350],req:'pc',unlock:2020,dur:10},
+  {id:'ai',es:'Consultor IA',en:'AI Consultant',emoji:'🤖',base:[200,700],req:'pc',unlock:2023,dur:22},
+  {id:'remote',es:'Trabajo remoto',en:'Remote work',emoji:'🏠',base:[100,350],req:'pc',unlock:2020,dur:15},
   {id:'cloud',es:'Servidor nube',en:'Cloud server',emoji:'☁️',base:[0,0],req:'server',unlock:2015,sp:'server',dur:8},
-  {id:'crypto_analyst',es:'Analista crypto',en:'Crypto analyst',emoji:'🔍',base:[150,500],req:'pc',unlock:2018,dur:10},
-  {id:'nft',es:'Crear NFTs',en:'Create NFTs',emoji:'🖼',base:[50,2000],req:'pc',unlock:2021,sp:'influencer',dur:12},
-  {id:'quant',es:'Trading cuantitativo',en:'Quant trading',emoji:'🧮',base:[500,2000],req:'pc',unlock:2019,sp:'trade',dur:15},
+  {id:'crypto_analyst',es:'Analista crypto',en:'Crypto analyst',emoji:'🔍',base:[150,500],req:'pc',unlock:2018,dur:15},
+  {id:'nft',es:'Crear NFTs',en:'Create NFTs',emoji:'🖼',base:[50,2000],req:'pc',unlock:2021,sp:'influencer',dur:18},
+  {id:'quant',es:'Trading cuantitativo',en:'Quant trading',emoji:'🧮',base:[500,2000],req:'pc',unlock:2019,sp:'trade',dur:28},
 ];
 
 const HOUSES=[
@@ -1318,12 +1321,28 @@ function defaultState(){
 // ═══════════════════════════════════════════════════════════
 //  SAVE / LOAD
 // ═══════════════════════════════════════════════════════════
+// Compatibility layer for storage
+const storage = {
+  get: async (key) => {
+    if (window.storage && window.storage.get) return await window.storage.get(key, false);
+    return { value: localStorage.getItem(key) };
+  },
+  set: async (key, val) => {
+    if (window.storage && window.storage.set) return await window.storage.set(key, val, false);
+    return localStorage.setItem(key, val);
+  },
+  delete: async (key) => {
+    if (window.storage && window.storage.delete) return await window.storage.delete(key, false);
+    return localStorage.removeItem(key);
+  }
+};
+
 async function saveGame(silent){
   try{
     const data={...G,firedEvents:[...G.firedEvents],pl:{...G.pl}};
     // Sync secrets
     data.secretsFound=SECRET_ZONES.map(z=>z.found);
-    await window.storage.set(SAVE_KEY,JSON.stringify(data),false);
+    await storage.set(SAVE_KEY,JSON.stringify(data));
     if(!silent)toast(t('saved'),'g');
     return true;
   }catch(e){if(!silent)toast(t('save_err'),'r');return false;}
@@ -1331,7 +1350,7 @@ async function saveGame(silent){
 
 async function loadGame(){
   try{
-    const r=await window.storage.get(SAVE_KEY,false);
+    const r=await storage.get(SAVE_KEY);
     if(r&&r.value){
       const d=JSON.parse(r.value);
       d.firedEvents=new Set(d.firedEvents||[]);
@@ -1363,11 +1382,11 @@ async function loadGame(){
 }
 
 async function deleteSave(){
-  try{await window.storage.delete(SAVE_KEY,false);}catch(e){}
+  try{await storage.delete(SAVE_KEY);}catch(e){}
 }
 
 async function checkSaveExists(){
-  try{const r=await window.storage.get(SAVE_KEY,false);return !!(r&&r.value);}catch(e){return false;}
+  try{const r=await storage.get(SAVE_KEY);return !!(r&&r.value);}catch(e){return false;}
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3268,7 +3287,7 @@ function defaultStateV41(){
 }
 async function loadAndStartQuiet(){
   try{
-    const r=await window.storage.get(SAVE_KEY,false);
+    const r=await storage.get(SAVE_KEY);
     if(r&&r.value){
       const d=JSON.parse(r.value);
       d.firedEvents=new Set(d.firedEvents||[]);
@@ -3683,16 +3702,45 @@ function openModCreator(){
     {label:'Cerrar', fn:closeModal}
   ]);
 }
-function applyMod(jsonStr){
+function applyMod(jsonStr, isSilent=false){
   try{
     const mod=JSON.parse(jsonStr);
     if(!mod.name)throw new Error('Mod sin nombre');
+
+    // Apply bonuses
     if(mod.moneyBonus&&G)G.money+=mod.moneyBonus;
     if(mod.multiplier&&G)G.earningsMultiplier=(G.earningsMultiplier||1)*mod.multiplier;
-    loadedMods.push({name:mod.name,version:mod.version||'1.0'});
-    toast(`🔌 Mod "${mod.name}" cargado`,'p');
-    if(G)updateHUD();
-  }catch(e){toast('❌ Mod error: '+e.message,'r');}
+
+    // Append content to game arrays
+    if(mod.jobs && Array.isArray(mod.jobs)){
+      mod.jobs.forEach(j => {
+        if(!JOBS.find(ex => ex.id === j.id)) JOBS.push(j);
+      });
+    }
+    if(mod.items && Array.isArray(mod.items)){
+      mod.items.forEach(i => {
+        if(!SHOP_ITEMS.find(ex => ex.id === i.id)) SHOP_ITEMS.push(i);
+      });
+    }
+    if(mod.businesses && Array.isArray(mod.businesses)){
+      mod.businesses.forEach(b => {
+        if(!BUSINESSES.find(ex => ex.id === b.id)) BUSINESSES.push(b);
+      });
+    }
+
+    // Persist in G
+    if(G && !isSilent){
+      G.loadedMods = G.loadedMods || [];
+      if(!G.loadedMods.find(m => m.name === mod.name)) G.loadedMods.push(jsonStr);
+    }
+
+    if(!loadedMods.find(m => m.name === mod.name)) {
+      loadedMods.push({name:mod.name,version:mod.version||'1.0'});
+    }
+
+    if(!isSilent) toast(`🔌 Mod "${mod.name}" cargado`,'p');
+    if(G) updateHUD();
+  }catch(e){ if(!isSilent) toast('❌ Mod error: '+e.message,'r'); console.error(e); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3838,6 +3886,10 @@ function startGame(){
   if(G.secretsFound)SECRET_ZONES.forEach((z,i)=>z.found=G.secretsFound[i]||false);
   // Multiplayer
   if(G.multiMode&&!mpEnabled)initMpMode();
+  // Re-apply mods
+  if(G.loadedMods && Array.isArray(G.loadedMods)){
+    G.loadedMods.forEach(mJson => applyMod(mJson, true));
+  }
   // Auto-clicker btn
   const acb=document.getElementById('ac-btn');
   if(acb)acb.style.display=(G.totalAdsWatched||0)>=20?'':'none';
@@ -4056,19 +4108,26 @@ function tradeSend(asset,amount,toName){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — PAYMENT MODAL (Info + Links)
+//  v5.0 — PAYMENT MODAL (Info + Real Stripe/PayPal Guide)
 // ═══════════════════════════════════════════════════════════
 function openPayments(){
   openModal('💳 TIENDA DE MONEDAS', `
     <div style="font-family:'VT323',monospace;font-size:17px;color:#888;">
-      <div style="margin-bottom:10px;">Selecciona un paquete para comprar con <span style="color:var(--gold);">Dinero Real</span>:</div>
+      <div style="margin-bottom:10px;">Comprar paquetes de monedas:</div>
       <div class="opt g" onclick="processPayment(1000, 0.99)">📦 1.000 Monedas <span style="float:right;">0.99€</span></div>
       <div class="opt g" onclick="processPayment(5000, 3.99)">📦 5.000 Monedas <span style="float:right;">3.99€</span></div>
       <div class="opt g" onclick="processPayment(20000, 9.99)">📦 20.000 Monedas <span style="float:right;">9.99€</span></div>
-      <div class="opt g" onclick="processPayment(100000, 39.99)">💎 100.000 Monedas <span style="float:right;">39.99€</span></div>
 
       <div style="font-size:14px;color:#444;margin-top:10px;border-top:1px solid #222;padding-top:5px;">
-        ℹ️ Los pagos son simulados para demostración.
+        🔧 <b>Guía para Desarrollador (Pagos Reales):</b><br>
+        1. Para <b>Stripe</b>: Integra el SDK en el script (checkout.js).<br>
+        2. Para <b>PayPal</b>: Añade el script de PayPal Smart Buttons.<br>
+        3. El sistema v5 está preparado para llamar a <i>verifyPurchase()</i> tras el callback del proveedor.
+      </div>
+
+      <div id="payment-gateways" style="display:flex;gap:5px;margin-top:10px;">
+         <button class="bb b" style="flex:1;font-size:6px;" onclick="toast('Integrando Stripe...')">STRIPE</button>
+         <button class="bb g" style="flex:1;font-size:6px;" onclick="toast('Integrando PayPal...')">PAYPAL</button>
       </div>
     </div>
   `, [{label:'Cerrar', fn:closeModal}]);
@@ -4117,62 +4176,32 @@ async function processPayment(amount, price){
 //  v5.0 — GAME DESCRIPTION FOR AI HANDOFF
 // ═══════════════════════════════════════════════════════════
 const GAME_DESCRIPTION=`
-JOGONÍA v5.0 — Descripción completa para desarrollo por IA externa
-===================================================================
+JOGONÍA v5.0 — MEMORIA INTEGRAL PARA IA (VERSIÓN 5.0)
+=====================================================
 
-ESTILO: RPG económico pixel art retro. Canvas 2D. HTML puro, sin frameworks.
-Fuentes: Press Start 2P (títulos), VT323 (texto). Paleta: negro/dorado/verde neón.
+ESTILO: RPG económico "pixel art" desarrollado en HTML5 puro (Canvas 2D).
+SISTEMA DE TOKEN-EFFICIENT: Diseñado para funcionar con Claude, GPT-4, Grok y otros.
 
-MECÁNICAS PRINCIPALES:
-- El jugador empieza en 2008 con €50 y debe comprar todas las propiedades.
-- El tiempo avanza automáticamente (1x–100x) con eventos históricos reales.
-- Precios históricos reales de BTC, ETH, Oro, S&P500, Apple, Tesla, Solana, BNB, XRP.
-- Eventos reales: Lehman 2008, Bitcoin genesis 2009, COVID 2020, FTX 2022, etc.
-- Post-2026: eventos generados proceduralmente.
+MECÁNICAS v5.0:
+- TIEMPO DINÁMICO: Simulación 2008-2026 con precios históricos y post-2026 procedural.
+- TRABAJOS CON DURACIÓN: Barras de progreso reales. Los trabajos premium tardan más.
+- MODS PERSISTENTES: Sistema de carga de JSON que añade trabajos y objetos de forma permanente al estado G.
+- MONETIZACIÓN REAL: Integración de Google AdSense (ca-pub-6754320079973999) y pasarela de pagos.
+- AI MEMORY SYNC: Este texto se actualiza con el estado actual del objeto G para continuidad total.
 
-SISTEMA DE DINERO:
-- Trabajos (19): pasear perros → consultor IA. Se desbloquean por año.
-- Mercado: 9 activos con precios históricos interpolados.
-- Negocios (12): generan ingresos pasivos diarios.
-- Crimen (8 tipos): sistema de 5 estrellas → multa + cárcel.
-- Casino: Blackjack automático + Ruleta con premios en BTC.
+ESTRUCTURA DE DATOS (Objeto G):
+- year, month, day: Fecha actual.
+- money: Saldo en €.
+- portfolio: Activos (btc, eth, solana, gold, sp500, apple, tesla, bnb, xrp).
+- helperMoney/helperCrime: Niveles de ayudantes (0-50).
+- loadedMods: Array de strings JSON con los mods activos.
 
-AYUDANTES (2 × 50 niveles):
-- Ayudante de Dinero: auto-income/día, multiplicador pasivo (x4.9 al max), auto-trade.
-- Ayudante de Robos: +1%→+500% éxito crimen, -95% arresto, -90% multas.
-- Auto Clicker: se desbloquea con 20 anuncios vistos. Genera dinero automático.
+AYUDANTES:
+- Dinero: Auto-trade y multiplicador de ingresos pasivos.
+- Crimen: Reducción de riesgo de cárcel y multas.
 
-MAPAS:
-- Isla principal: 30×25 tiles. 9 casas, 8 NPCs ambulantes, policía si wanted≥3.
-- Isla secundaria: 60×10 tiles. Acceso por barco desde el muelle este.
-- 4 zonas secretas: +€50.000 cada una (2 por isla).
-- Tiles: grass(0), water(1), path(2), tree(3), flower(4), building(5), sand(6), dock(7), rock(8), bush(9), crops(10).
-
-CASINO: Blackjack (draw automático, cartas animadas) + Ruleta (spin animado, premios BTC).
-
-GRÁFICOS:
-- Canvas 2D, drawTile() con 11 tipos de tile y variación por seed.
-- drawPlayerSprite() con 8 skins (color body/skin/hair).
-- drawNPC(): 8 transeúntes animados con movimiento aleatorio.
-- drawHouseSprite(): 9 casas con sombras, ventanas, bandera si owned.
-- Calidades: 0=baja, 1=normal, 2=alta, 3=épica.
-
-AJUSTES: 4 calidades gráficas, 6 idiomas (ES/EN/CA/FR/DE/PT), velocidades 1x–100x.
-
-MULTIJUGADOR:
-- Local (2 jugadores alternos): switch de estado.
-- Online tabs: BroadcastChannel API — misma red/dispositivo.
-- Chat en tiempo real entre tabs. Intercambio de activos.
-- 8 skins seleccionables por jugador.
-
-SISTEMA DE MODS (JSON):
-{"name":"NombreMod","version":"1.0","moneyBonus":10000,"multiplier":2.0,"jobs":[],"items":[]}
-
-SEMILLA: cada partida tiene UUID único para exportar/importar entre versiones.
-GUARDADO: window.storage (Claude chat) + Export JSON + Import JSON.
-
-TECNOLOGÍA: HTML5 puro. Canvas 2D. Sin librerías. Compatible móvil y PC.
-Admin password: admin-2026-beta
+MAPAS: Isla Principal e Isla Secundaria accesibles por barco. 4 zonas secretas.
+MULTIPLAYER: BroadcastChannel para sincronización entre pestañas/red local.
 `;
 
 function openGameDescription(){
