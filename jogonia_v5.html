@@ -6,6 +6,8 @@
 <title>JOGONÍA v5.0</title>
 <!-- Google AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6754320079973999" crossorigin="anonymous"></script>
+ <!-- PayPal SDK -->
+ <script src="https://www.paypal.com/sdk/js?client-id=TEST_CLIENT_ID&currency=EUR"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Orbitron:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;}
@@ -937,18 +939,24 @@ function genFuturePrice(asset,year,month){
 function getPrice(asset,year,month){
   const pts=PRICE_PTS[asset];
   if(!pts)return 0;
-  if(year>2026||(year===2026&&month>3))return genFuturePrice(asset,year,month);
-  const val=year*12+month;
-  let lo=null,hi=null;
-  for(const p of pts){
-    const v=p[0]*12+p[1];
-    if(v<=val)lo=p;
-    if(v>=val&&!hi)hi=p;
+  let price = 0;
+  if(year>2026||(year===2026&&month>3)) price = genFuturePrice(asset,year,month);
+  else {
+    const val=year*12+month;
+    let lo=null,hi=null;
+    for(const p of pts){
+      const v=p[0]*12+p[1];
+      if(v<=val)lo=p;
+      if(v>=val&&!hi)hi=p;
+    }
+    if(!lo) price = 0;
+    else if(!hi||hi===lo) price = lo[2];
+    else {
+      const t=(val-(lo[0]*12+lo[1]))/((hi[0]*12+hi[1])-(lo[0]*12+lo[1]));
+      price = lo[2]+(hi[2]-lo[2])*t;
+    }
   }
-  if(!lo)return 0;
-  if(!hi||hi===lo)return lo[2];
-  const t=(val-(lo[0]*12+lo[1]))/((hi[0]*12+hi[1])-(lo[0]*12+lo[1]));
-  return lo[2]+(hi[2]-lo[2])*t;
+  return price * getModEffect('multiply_price');
 }
 
 function assetAvail(id,y,m){
@@ -1747,6 +1755,7 @@ function startTick(){
 
 function advanceDay(){
   G.day++;
+  G.daysPlayed = (G.daysPlayed || 0) + 1;
   const dims=[31,28,31,30,31,30,31,31,30,31,30,31];
   const leap=G.year%4===0&&(G.year%100!==0||G.year%400===0);
   const max=(G.month===2&&leap)?29:dims[G.month-1];
@@ -1754,6 +1763,8 @@ function advanceDay(){
   if(G.month>12){G.month=1;G.year++;onNewYear();}
   // Passive income
   const pInc=calcPassive();G.money+=pInc/30;
+  // Mod bonus money per day
+  G.money += getModSum('add_money_per_day')/30;
   // God mode
   if(G.godMode)G.money+=1000/30;
   // Money helper: auto income + auto-trade
@@ -2023,8 +2034,9 @@ function getJobPay(j){
   if(j.sp)return null;
   const yb=(G.year-2008)*2.5;
   const qb=G.items.quantum?10:G.items.satellite?3:1;
-  return [Math.round((j.base[0]+yb)*G.earningsMultiplier*qb),
-          Math.round((j.base[1]+yb*1.5)*G.earningsMultiplier*qb)];
+  const modPayMult = getModEffect('multiply_pay');
+  return [Math.round((j.base[0]+yb)*G.earningsMultiplier*qb*modPayMult),
+          Math.round((j.base[1]+yb*1.5)*G.earningsMultiplier*qb*modPayMult)];
 }
 
 async function doWork(){
@@ -2035,6 +2047,9 @@ async function doWork(){
     [{label:t('cancel'),fn:closeModal}]);
   avail.forEach(j=>{
     let desc='';
+    const durLabel = j.dur <= 2 ? '⚡ Rápido' : j.dur <= 6 ? '🕐 Normal' : j.dur <= 15 ? '🕑 Lento' : '🐢 Muy lento';
+    const lv = G.jobLevels?.[j.id] || 0;
+
     if(j.sp==='mine')desc=`BTC @${fmtE(Math.round(getPrice('btc',G.year,G.month)))}`;
     else if(j.sp==='rig_mine')desc='Mining Rig x5';
     else if(j.sp==='trade')desc=lang==='es'?'Riesgo':'Risky';
@@ -2042,7 +2057,13 @@ async function doWork(){
     else if(j.sp==='defi')desc='ETH Yield';
     else if(j.sp==='server')desc=lang==='es'?'Ingresos pasivos':'Passive income';
     else{const p=getJobPay(j);desc=`${fmtE(p[0])}–${fmtE(p[1])}`;}
-    addOpt(`${j.emoji} ${j[lang]||j.es} <span style="color:#555">— ${desc}</span>`,()=>execJob(j),'g');
+
+    addOpt(`
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span>${j.emoji} ${j[lang]||j.es} <span style="color:#555">— ${desc}</span></span>
+        <span style="font-size:13px;color:#333;">${durLabel}${lv > 0 ? ` · ⭐ Nv.${lv}` : ''}</span>
+      </div>
+    `,()=>execJob(j),'g');
   });
   if(locked.length){
     const div=document.createElement('div');
@@ -2146,7 +2167,11 @@ async function execJob(j){
   setLoad(false);
   document.getElementById('mcont').innerHTML=narr||`${j.emoji} +${fmtE(earn)}`;
   G.totalEarned+=earn;
-  addBtn(`✅ ${t('collect')} ${fmtE(earn)}`,()=>{G.money+=earn;closeModal();toast(`+${fmtE(earn)} 💰`,'');updateHUD();},'g');
+  addBtn(`✅ ${t('collect')} ${fmtE(earn)}`,()=>{
+    G.money+=earn;
+    G.jobLevels[j.id] = (G.jobLevels[j.id] || 0) + 1;
+    closeModal();toast(`+${fmtE(earn)} 💰`,'');updateHUD();
+  },'g');
   addBtn(t('close'),closeModal);
 }
 
@@ -2221,7 +2246,7 @@ function openTrade(a,p){
     addOpt(`🛒 Comprar ${amt} ${a.unit}  →  ${fmtE(cost)}`,canBuy?()=>{
       G.money-=cost;
       G.portfolio[a.id]=parseFloat(((G.portfolio[a.id]||0)+amt).toFixed(8));
-      G.totalSpent+=cost;
+      G.totalSpent=(G.totalSpent||0)+cost;
       (G.purchaseHistory=G.purchaseHistory||[]).push({d:`${G.year}-${G.month}`,item:`${amt} ${a.unit}`,cost});
       toast(`✅ +${amt} ${a.unit}  −${fmtE(cost)}`,'b');
       updateHUD();openTrade(a,getPrice(a.id,G.year,G.month));
@@ -2267,7 +2292,7 @@ function doBuyCustom(assetId,effP){
   if(G.money<cost){toast(t('no_funds'),'r');return;}
   G.money-=cost;
   G.portfolio[assetId]=parseFloat(((G.portfolio[assetId]||0)+amt).toFixed(8));
-  G.totalSpent+=cost;
+  G.totalSpent=(G.totalSpent||0)+cost;
   toast(`✅ +${amt}  −${fmtE(cost)}`,'b');
   updateHUD();
   const a=ASSETS.find(x=>x.id===assetId);
@@ -2286,7 +2311,7 @@ function openBizMenu(){
     addOpt(`${biz.emoji} ${biz[lang]||biz.es} <span style="color:#555">${fmtE(cost)} → +${fmtE(biz.income)}/día</span>`,()=>{
       if(G.money<cost){toast(t('no_funds'),'r');return;}
       showConfirm(`${t('confirm_buy')}\n${biz[lang]||biz.es} por ${fmtE(cost)}`,()=>{
-        G.money-=cost;G.businesses.push({...biz});G.totalSpent+=cost;
+        G.money-=cost;G.businesses.push({...biz});G.totalSpent=(G.totalSpent||0)+cost;
         G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:biz[lang]||biz.es,cost});
         toast(`🏢 +${biz[lang]||biz.es}`,'g');updateHUD();openBizMenu();
       });
@@ -2311,6 +2336,7 @@ const CRIMES=[
 async function doCrime(){
   const clv=G.helperCrime||0;
   const cc=clv>0?hCrimeConf(clv):{successBonus:0,arrestRed:0,fineRed:0};
+  const modRiskRed = getModEffect('reduce_risk'); // e.g. 0.5 means half risk
   let html=`<div style="font-family:VT323,monospace;font-size:17px;color:#ff4444;margin-bottom:8px">⭐ ${G.wanted}/5${clv>0?` · 🔪 Nv.${clv} (+${Math.round(cc.successBonus*100)}% éxito)`:''}</div>`;
   openModal(lang==='es'?'🔪 ACTIVIDADES ILEGALES':'🔪 ILLEGAL ACTIVITIES',html,[{label:t('cancel'),fn:closeModal}]);
   CRIMES.forEach(c=>{
@@ -2318,7 +2344,8 @@ async function doCrime(){
     const unlock=c.unlock||2008;
     if(G.year<unlock){addOpt(`${c[lang]||c.es} <span style="color:#222">${t('unlock')} ${unlock}</span>`,null,'',true);return;}
     const reward=c.reward||c.r||[100,500];
-    const baseSucc=clamp((1-(c.risk||0.4))-(G.wanted*0.07)+cc.successBonus,0.02,0.98);
+    const risk = (c.risk || 0.4) * modRiskRed;
+    const baseSucc=clamp((1-risk)-(G.wanted*0.07)+cc.successBonus,0.02,0.98);
     addOpt(`${c[lang]||c.es} <span style="color:#555">${fmtE(reward[0])}–${fmtE(reward[1])} · ${Math.round(baseSucc*100)}%</span>`,()=>execCrime(c,baseSucc),'r');
   });
 }
@@ -2334,6 +2361,7 @@ async function execCrime(cr,successChance){
   clearBtns();
   if(succ){
     G.money+=earn;G.wanted=Math.min(5,G.wanted+(cr.stars||1));
+    G.crimesCommitted = (G.crimesCommitted || 0) + 1;
     addBtn(`✅ ${fmtE(earn)}`,()=>{closeModal();toast(`+${fmtE(earn)}`,'');updateHUD();},'r');
   }else{
     G.wanted=Math.min(5,G.wanted+(cr.stars||1)+1);
@@ -2396,7 +2424,7 @@ async function buyHouse(id){
   const disc=discountMult();const effP=Math.round(h.price*disc);
   if(G.money<effP){toast(t('no_funds'),'r');return;}
   showConfirm(`${t('confirm_buy')}\n${h[lang]||h.es} — ${fmtE(effP)}`,async()=>{
-    G.money-=effP;G.ownedHouses.push(id);G.totalSpent+=effP;
+    G.money-=effP;G.ownedHouses.push(id);G.totalSpent=(G.totalSpent||0)+effP;
     G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:h[lang]||h.es,cost:effP});
     closeModal();
     const narr=await ai(`RPG cómico España ${G.year}. Compré "${h[lang]||h.es}" por ${fmtE(effP)}. 2 frases épicas y graciosas. Sin asteriscos.`);
@@ -2424,7 +2452,7 @@ function doShop(){
     addOpt(`${item[lang]||item.es} <span style="color:#555">${fmtE(cost)}</span><br><span style="font-size:15px;color:#333">${desc}</span>`,()=>{
       if(!can){toast(t('no_funds'),'r');return;}
       showConfirm(`${t('confirm_buy')}\n${item[lang]||item.es} — ${fmtE(cost)}`,()=>{
-        G.money-=cost;G.items[item.id]=true;G.totalSpent+=cost;
+        G.money-=cost;G.items[item.id]=true;G.totalSpent=(G.totalSpent||0)+cost;
         G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:item[lang]||item.es,cost});
         toast(`✅ ${lang==='es'?'Comprado':'Purchased'}!`,'b');updateHUD();doShop();
       });
@@ -2452,19 +2480,31 @@ function watchAd(){
   if(G.adDate!==today){G.adDate=today;G.adWatched=0;}
   if(G.adWatched>=5){toast(lang==='es'?'Límite diario: 5 anuncios':'Daily limit: 5 ads','r');return;}
 
-  openModal(lang==='es'?'📺 ANUNCIO EN REPRODUCCIÓN':'📺 PLAYING AD',
-    `<div style="font-family:VT323,monospace;font-size:19px;text-align:center;background:#000;padding:20px;border:1px solid #333;position:relative;">
-      <div id="ad-video-mock" style="height:150px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;">
-        <div style="font-size:50px;animation:pulse 1.5s ease-in-out infinite;">🎬</div>
-        <div style="color:#555;font-size:14px;">Publicidad de Terceros...</div>
+  openModal(lang==='es'?'📺 ANUNCIO REAL':'📺 REAL AD',
+    `<div style="font-family:VT323,monospace;font-size:19px;text-align:center;background:#000;padding:10px;border:1px solid #333;">
+      <div id="adsense-unit" style="min-height:250px; background:#111; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+        <!-- AdSense Display Unit -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6754320079973999"
+             data-ad-slot="1234567890"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <div id="ad-loading-text" style="color:#444; font-size:12px;">Cargando anuncio de Google...</div>
       </div>
-      <div id="ad-skip-container" style="position:absolute;top:5px;right:5px;"></div>
-      <div id="ad-countdown" style="color:var(--gold);font-size:24px;margin-top:10px;">15</div>
-      <div style="height:4px;background:#222;width:100%;margin-top:10px;">
-        <div id="ad-prog" style="height:100%;background:var(--gold);width:0%;transition:width 1s linear;"></div>
+
+      <div id="ad-timer-cont" style="margin-top:10px;">
+        <div id="ad-countdown" style="color:var(--gold);font-size:20px;">15</div>
+        <div style="height:4px;background:#222;width:100%;margin-top:5px;">
+          <div id="ad-prog" style="height:100%;background:var(--gold);width:0%;transition:width 1s linear;"></div>
+        </div>
       </div>
+      <div id="ad-skip-container" style="margin-top:10px; height:30px;"></div>
     </div>`,[]
   );
+
+  // Trigger AdSense
+  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error(e); }
 
   let count=15;
   const interval=setInterval(()=>{
@@ -3277,6 +3317,11 @@ function defaultStateV41(){
     purchaseHistory:[],
     godMode:false,
     earningsMultiplier:1,
+    jobLevels:{}, // {jobId: level}
+    daysPlayed:0,
+    totalEarned:0,
+    totalSpent:0,
+    crimesCommitted:0,
     quality:ssQuality||1,
     animations:true,
     skin:'default',
@@ -3302,6 +3347,8 @@ async function loadAndStartQuiet(){
       if(!d.gameRules)d.gameRules={crimePenalty:true,jailTime:true,marketRisk:true,pvpEnabled:false,cheatsAllowed:false};
       if(!d.purchaseHistory)d.purchaseHistory=[];
       if(!d.earningsMultiplier)d.earningsMultiplier=1;
+      if(!d.jobLevels)d.jobLevels={};
+      if(!d.daysPlayed)d.daysPlayed=0;
       if(!d.godMode)d.godMode=false;
       if(!d.portfolio.bnb)d.portfolio.bnb=0;
       if(!d.portfolio.xrp)d.portfolio.xrp=0;
@@ -3453,7 +3500,7 @@ function doHelpers(){
   openModal('🤖 AYUDANTES',ms.h+cs.h+acH,[{label:'Cerrar',fn:closeModal}]);
   if(ms.can){addBtn(`💰 Mejorar Nv.${ms.lv+1} — ${fmtE(ms.effC)}`,()=>{
     showConfirm(`Comprar 💰 Helper Nv.${ms.lv+1} — ${fmtE(ms.effC)}`,()=>{
-      G.money-=ms.effC;G.helperMoney=(G.helperMoney||0)+1;G.totalSpent+=ms.effC;
+      G.money-=ms.effC;G.helperMoney=(G.helperMoney||0)+1;G.totalSpent=(G.totalSpent||0)+ms.effC;
       G.purchaseHistory=G.purchaseHistory||[];G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:`💰 Helper Nv.${G.helperMoney}`,cost:ms.effC});
       toast(`💰 Helper Nv.${G.helperMoney}`,'g');updateHUD();doHelpers();
     });
@@ -3462,7 +3509,7 @@ function doHelpers(){
   else addBtn(`💰 Faltan ${fmtE(ms.effC-Math.round(G.money))}`,null,'',true);
   if(cs.can){addBtn(`🔪 Mejorar Nv.${cs.lv+1} — ${fmtE(cs.effC)}`,()=>{
     showConfirm(`Comprar 🔪 Helper Nv.${cs.lv+1} — ${fmtE(cs.effC)}`,()=>{
-      G.money-=cs.effC;G.helperCrime=(G.helperCrime||0)+1;G.totalSpent+=cs.effC;
+      G.money-=cs.effC;G.helperCrime=(G.helperCrime||0)+1;G.totalSpent=(G.totalSpent||0)+cs.effC;
       G.purchaseHistory=G.purchaseHistory||[];G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:`🔪 Helper Nv.${G.helperCrime}`,cost:cs.effC});
       toast(`🔪 Helper Nv.${G.helperCrime}`,'r');updateHUD();doHelpers();
     });
@@ -3665,49 +3712,100 @@ function openModPanel(){
   document.getElementById('mod-ov').classList.add('open');
 }
 
+let editingMod = null;
 function openModCreator(){
+  if(!editingMod) editingMod = { name: 'Mi Super Mod', version: '1.0', rules: [] };
+
+  let rulesHtml = '';
+  editingMod.rules.forEach((r, i) => {
+    rulesHtml += `
+      <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center;background:#111;padding:4px;">
+        <select onchange="updateModRule(${i},'type',this.value)" style="background:#000;color:#00ff41;border:1px solid #333;font-size:12px;flex:1;">
+          <option value="multiply_pay" ${r.type==='multiply_pay'?'selected':''}>💰 Mult. Paga</option>
+          <option value="multiply_price" ${r.type==='multiply_price'?'selected':''}>📊 Mult. Precio</option>
+          <option value="add_money_per_day" ${r.type==='add_money_per_day'?'selected':''}>💵 Dinero/Día</option>
+          <option value="reduce_risk" ${r.type==='reduce_risk'?'selected':''}>🛡 Reducir Riesgo</option>
+        </select>
+        <input type="number" value="${r.value}" onchange="updateModRule(${i},'value',this.value)" style="width:50px;background:#000;color:#ffd700;border:1px solid #333;font-size:12px;">
+        <button onclick="removeModRule(${i})" style="background:#440000;color:#fff;border:none;padding:2px 5px;cursor:pointer;">✕</button>
+      </div>`;
+  });
+
   openModal('🛠 CREADOR DE MODS', `
     <div style="font-family:VT323,monospace;font-size:16px;color:#888;">
-      <label>Nombre del Mod:</label><br>
-      <input id="mc-name" type="text" style="width:100%;background:#111;border:1px solid #333;color:var(--purple);padding:5px;margin-bottom:8px;" value="Mi Super Mod">
-      <label>Versión:</label><br>
-      <input id="mc-ver" type="text" style="width:100%;background:#111;border:1px solid #333;color:var(--purple);padding:5px;margin-bottom:8px;" value="1.0">
-      <label>Dinero Inicial (€):</label><br>
-      <input id="mc-money" type="number" style="width:100%;background:#111;border:1px solid #333;color:var(--green);padding:5px;margin-bottom:8px;" value="10000">
-      <label>Multiplicador Ganancias:</label><br>
-      <input id="mc-mult" type="number" step="0.1" style="width:100%;background:#111;border:1px solid #333;color:var(--gold);padding:5px;margin-bottom:8px;" value="2.0">
-      <div id="mc-preview" style="background:#000;border:1px solid #222;padding:5px;font-size:12px;color:#555;max-height:60px;overflow-y:auto;margin-top:5px;white-space:pre-wrap;"></div>
+      <label>Nombre:</label>
+      <input id="mc-name" value="${editingMod.name}" onchange="editingMod.name=this.value" style="width:100%;background:#111;border:1px solid #333;color:var(--purple);margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:10px;color:var(--green);">REGLAS (${editingMod.rules.length})</span>
+        <button class="bb g" style="font-size:6px;padding:2px 5px;" onclick="addModRule()">+ REGLA</button>
+      </div>
+      <div id="mc-rules-cont" style="max-height:120px;overflow-y:auto;border:1px solid #222;padding:4px;margin-bottom:8px;">
+        ${rulesHtml || '<div style="text-align:center;color:#333;font-size:12px;">Sin reglas</div>'}
+      </div>
     </div>
   `, [
-    {label:'💾 Generar y Aplicar', fn:()=>{
-      const mod = {
-        name: document.getElementById('mc-name').value,
-        version: document.getElementById('mc-ver').value,
-        moneyBonus: parseFloat(document.getElementById('mc-money').value),
-        multiplier: parseFloat(document.getElementById('mc-mult').value)
-      };
-      applyMod(JSON.stringify(mod));
+    {label:'💾 Aplicar', fn:()=>{
+      applyMod(JSON.stringify(editingMod));
+      editingMod = null;
       closeModal();
     }, cls:'p'},
-    {label:'📋 Copiar JSON', fn:()=>{
-       const mod = {
-        name: document.getElementById('mc-name').value,
-        version: document.getElementById('mc-ver').value,
-        moneyBonus: parseFloat(document.getElementById('mc-money').value),
-        multiplier: parseFloat(document.getElementById('mc-mult').value)
-      };
-      navigator.clipboard.writeText(JSON.stringify(mod, null, 2));
+    {label:'📋 Copiar', fn:()=>{
+      navigator.clipboard.writeText(JSON.stringify(editingMod, null, 2));
       toast('📋 JSON Copiado', 'g');
     }},
-    {label:'Cerrar', fn:closeModal}
+    {label:'✕', fn:()=>{ editingMod=null; closeModal(); }}
   ]);
 }
+
+window.addModRule = () => {
+  editingMod.rules.push({type:'multiply_pay', value: 2.0});
+  openModCreator();
+};
+window.updateModRule = (i, field, val) => {
+  editingMod.rules[i][field] = field==='value'?parseFloat(val):val;
+};
+window.removeModRule = (i) => {
+  editingMod.rules.splice(i, 1);
+  openModCreator();
+};
+function getModEffect(type){
+  let effect = 1;
+  if(!G || !G.loadedMods) return effect;
+  G.loadedMods.forEach(mJson => {
+    try {
+      const mod = JSON.parse(mJson);
+      if(mod.rules && Array.isArray(mod.rules)){
+        mod.rules.forEach(rule => {
+          if(rule.type === type) effect *= rule.value;
+        });
+      }
+    } catch(e){}
+  });
+  return effect;
+}
+
+function getModSum(type){
+  let sum = 0;
+  if(!G || !G.loadedMods) return sum;
+  G.loadedMods.forEach(mJson => {
+    try {
+      const mod = JSON.parse(mJson);
+      if(mod.rules && Array.isArray(mod.rules)){
+        mod.rules.forEach(rule => {
+          if(rule.type === type) sum += rule.value;
+        });
+      }
+    } catch(e){}
+  });
+  return sum;
+}
+
 function applyMod(jsonStr, isSilent=false){
   try{
     const mod=JSON.parse(jsonStr);
     if(!mod.name)throw new Error('Mod sin nombre');
 
-    // Apply bonuses
+    // Apply initial bonuses
     if(mod.moneyBonus&&G)G.money+=mod.moneyBonus;
     if(mod.multiplier&&G)G.earningsMultiplier=(G.earningsMultiplier||1)*mod.multiplier;
 
@@ -4113,24 +4211,54 @@ function tradeSend(asset,amount,toName){
 function openPayments(){
   openModal('💳 TIENDA DE MONEDAS', `
     <div style="font-family:'VT323',monospace;font-size:17px;color:#888;">
-      <div style="margin-bottom:10px;">Comprar paquetes de monedas:</div>
-      <div class="opt g" onclick="processPayment(1000, 0.99)">📦 1.000 Monedas <span style="float:right;">0.99€</span></div>
-      <div class="opt g" onclick="processPayment(5000, 3.99)">📦 5.000 Monedas <span style="float:right;">3.99€</span></div>
-      <div class="opt g" onclick="processPayment(20000, 9.99)">📦 20.000 Monedas <span style="float:right;">9.99€</span></div>
+      <div style="margin-bottom:10px;">Comprar paquetes con PayPal:</div>
+      <div class="opt g" onclick="initPayPal(1000, 0.99)">📦 1.000 Monedas <span style="float:right;">0.99€</span></div>
+      <div class="opt g" onclick="initPayPal(5000, 3.99)">📦 5.000 Monedas <span style="float:right;">3.99€</span></div>
+      <div class="opt g" onclick="initPayPal(20000, 9.99)">📦 20.000 Monedas <span style="float:right;">9.99€</span></div>
 
-      <div style="font-size:14px;color:#444;margin-top:10px;border-top:1px solid #222;padding-top:5px;">
-        🔧 <b>Guía para Desarrollador (Pagos Reales):</b><br>
-        1. Para <b>Stripe</b>: Integra el SDK en el script (checkout.js).<br>
-        2. Para <b>PayPal</b>: Añade el script de PayPal Smart Buttons.<br>
-        3. El sistema v5 está preparado para llamar a <i>verifyPurchase()</i> tras el callback del proveedor.
+      <div id="paypal-container" style="margin-top:10px; min-height:150px; display:none; background:#111; padding:10px; border:1px solid #333;">
+         <div id="paypal-button-container"></div>
+         <button class="bb r" style="width:100%; margin-top:5px;" onclick="document.getElementById('paypal-container').style.display='none'">CANCELAR</button>
       </div>
 
-      <div id="payment-gateways" style="display:flex;gap:5px;margin-top:10px;">
-         <button class="bb b" style="flex:1;font-size:6px;" onclick="toast('Integrando Stripe...')">STRIPE</button>
-         <button class="bb g" style="flex:1;font-size:6px;" onclick="toast('Integrando PayPal...')">PAYPAL</button>
+      <div style="font-size:12px;color:#444;margin-top:10px;border-top:1px solid #222;padding-top:5px;">
+        ℹ️ Para recibir dinero real, cambia <b>TEST_CLIENT_ID</b> en el código por tu Client ID de PayPal Developer.
       </div>
     </div>
   `, [{label:'Cerrar', fn:closeModal}]);
+}
+
+function initPayPal(amount, price) {
+  const container = document.getElementById('paypal-container');
+  container.style.display = 'block';
+  document.getElementById('paypal-button-container').innerHTML = '';
+
+  if(window.paypal) {
+    paypal.Buttons({
+      createOrder: (data, actions) => {
+        return actions.order.create({
+          purchase_units: [{
+            amount: { value: price.toString(), currency_code: 'EUR' },
+            description: `${amount} Jogonía Coins`
+          }]
+        });
+      },
+      onApprove: (data, actions) => {
+        return actions.order.capture().then(details => {
+          G.money += amount;
+          updateHUD();
+          toast(`✅ Pago completado por ${details.payer.name.given_name}`, 'g');
+          container.style.display = 'none';
+        });
+      },
+      onError: (err) => {
+        toast('❌ Error en el pago', 'r');
+        console.error(err);
+      }
+    }).render('#paypal-button-container');
+  } else {
+    toast('PayPal SDK no cargado', 'r');
+  }
 }
 
 async function processPayment(amount, price){
@@ -4176,32 +4304,29 @@ async function processPayment(amount, price){
 //  v5.0 — GAME DESCRIPTION FOR AI HANDOFF
 // ═══════════════════════════════════════════════════════════
 const GAME_DESCRIPTION=`
-JOGONÍA v5.0 — MEMORIA INTEGRAL PARA IA (VERSIÓN 5.0)
+JOGONÍA v5.1 — MEMORIA INTEGRAL PARA IA (VERSIÓN 5.1)
 =====================================================
 
-ESTILO: RPG económico "pixel art" desarrollado en HTML5 puro (Canvas 2D).
-SISTEMA DE TOKEN-EFFICIENT: Diseñado para funcionar con Claude, GPT-4, Grok y otros.
-
-MECÁNICAS v5.0:
+MECÁNICAS v5.1:
 - TIEMPO DINÁMICO: Simulación 2008-2026 con precios históricos y post-2026 procedural.
-- TRABAJOS CON DURACIÓN: Barras de progreso reales. Los trabajos premium tardan más.
-- MODS PERSISTENTES: Sistema de carga de JSON que añade trabajos y objetos de forma permanente al estado G.
-- MONETIZACIÓN REAL: Integración de Google AdSense (ca-pub-6754320079973999) y pasarela de pagos.
-- AI MEMORY SYNC: Este texto se actualiza con el estado actual del objeto G para continuidad total.
+- TRABAJOS CON PROGRESO Y NIVELES: Barras de progreso reales. Se gana experiencia (Nv.) por trabajo.
+- MOD RULES: Los mods ahora usan reglas (multiply_pay, multiply_price, reduce_risk, add_money_per_day).
+- MONETIZACIÓN REAL: Google AdSense real y pagos PayPal (Smart Buttons).
+- ESTADÍSTICAS: Tracking de días jugados, crímenes, ganancias y gastos totales.
 
 ESTRUCTURA DE DATOS (Objeto G):
-- year, month, day: Fecha actual.
-- money: Saldo en €.
-- portfolio: Activos (btc, eth, solana, gold, sp500, apple, tesla, bnb, xrp).
-- helperMoney/helperCrime: Niveles de ayudantes (0-50).
-- loadedMods: Array de strings JSON con los mods activos.
+- year, month, day, daysPlayed: Tiempo.
+- money, totalEarned, totalSpent: Contabilidad.
+- jobLevels: Niveles de experiencia por cada trabajo {id: lv}.
+- loadedMods: JSON strings con reglas activas.
+- portfolio: btc, eth, solana, gold, sp500, apple, tesla, bnb, xrp.
+- helperMoney/helperCrime: Niveles (0-50).
 
-AYUDANTES:
-- Dinero: Auto-trade y multiplicador de ingresos pasivos.
-- Crimen: Reducción de riesgo de cárcel y multas.
-
-MAPAS: Isla Principal e Isla Secundaria accesibles por barco. 4 zonas secretas.
-MULTIPLAYER: BroadcastChannel para sincronización entre pestañas/red local.
+REGLAS ACTIVAS DE MODS:
+- multiply_pay: Multiplicador global de paga.
+- multiply_price: Multiplicador de precios de activos.
+- reduce_risk: Multiplicador de riesgo de crimen (ej: 0.5 = mitad de riesgo).
+- add_money_per_day: Bono pasivo extra.
 `;
 
 function openGameDescription(){
@@ -4216,8 +4341,12 @@ function openGameDescription(){
     dynamicDesc += `Portfolio: ${JSON.stringify(G.portfolio)}\n`;
     dynamicDesc += `Propiedades: ${G.ownedHouses.join(', ')}\n`;
     dynamicDesc += `Buscado: ${G.wanted}/5\n`;
+    dynamicDesc += `Días Jugados: ${G.daysPlayed}\n`;
+    dynamicDesc += `Total Ganado: ${fmtE(G.totalEarned)}\n`;
+    dynamicDesc += `Crímenes: ${G.crimesCommitted}\n`;
     dynamicDesc += `Ayudantes: Dinero Nv.${G.helperMoney}, Crimen Nv.${G.helperCrime}\n`;
     dynamicDesc += `Mods cargados: ${loadedMods.map(m=>m.name).join(', ')}\n`;
+    dynamicDesc += `Niveles de Trabajo: ${JSON.stringify(G.jobLevels)}\n`;
     dynamicDesc += `--------------------------------------\n`;
     dynamicDesc += `Instrucción para IA: Utiliza estos datos para continuar la simulación exactamente desde este punto.`;
   }
