@@ -3,11 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>JOGONÍA v5.0</title>
-<!-- Google AdSense -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6754320079973999" crossorigin="anonymous"></script>
- <!-- PayPal SDK -->
- <script src="https://www.paypal.com/sdk/js?client-id=TEST_CLIENT_ID&currency=EUR"></script>
+<title>JOGONÍA v4.1</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Orbitron:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;}
@@ -332,7 +328,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   .hv{font-size:7px;}
 }
 @media(min-width:601px){.pc-hide{display:none!important;}}
-/* ═══ SETUP SCREEN v5.0 ═══ */
+/* ═══ SETUP SCREEN v4.1 ═══ */
 #setup-scr{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;
   background:radial-gradient(ellipse at 50% 30%,#0a1400,#000 70%);}
 #setup-scr .sbg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,65,.04)1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.04)1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
@@ -377,7 +373,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 <div id="setup-screen" style="position:fixed;inset:0;background:#000;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 30%,#0a1500,#000 70%);">
   <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,65,.04)1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.04)1px,transparent 1px);background-size:28px 28px;pointer-events:none;"></div>
   <div style="font-size:clamp(16px,5vw,42px);color:var(--gold);letter-spacing:5px;z-index:1;text-shadow:0 0 30px var(--gold),3px 3px 0 var(--g2);animation:glow 2s ease-in-out infinite;">JOGONÍA</div>
-  <div style="font-size:clamp(6px,1.5vw,9px);color:var(--green);letter-spacing:3px;z-index:1;">v5.0 — SIMULACIÓN ECONÓMICA DEFINITIVA</div>
+  <div style="font-size:clamp(6px,1.5vw,9px);color:var(--green);letter-spacing:3px;z-index:1;">v4.1 — SIMULACIÓN ECONÓMICA DEFINITIVA</div>
   <!-- Language -->
   <div style="z-index:1;text-align:center;">
     <div style="font-size:7px;color:#444;margin-bottom:7px;letter-spacing:2px;">🌐 IDIOMA / LANGUAGE</div>
@@ -422,7 +418,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 <div id="title" style="display:none;">
   <div class="t-grid"></div><div class="t-scan"></div>
   <div class="t-h1">JOGONÍA</div>
-  <div class="t-h2">v5.0 — Simulación Económica Definitiva</div>
+  <div class="t-h2">v4.1 — Simulación Económica Definitiva</div>
   <div class="t-ver">2008 → ∞</div>
   <div class="t-desc" id="t-desc">€50 en el bolsillo. Bitcoin no existe aún.<br>
     Trabaja, invierte, roba o hackea tu camino<br>hasta la cima.</div>
@@ -656,14 +652,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 
 <script>
 'use strict';
-// v5: Configuración de Anuncios Reales (AdSense/AdMob)
-const AD_CONFIG = {
-  publisherId: "ca-pub-6754320079973999",
-  adUnitId: "ca-app-pub-3940256099942544/1033173712", // ID de prueba
-  realAds: true,
-  debug: false
-};
-
 // ═══════════════════════════════════════════════════════════
 //  UTILITIES
 // ═══════════════════════════════════════════════════════════
@@ -939,24 +927,18 @@ function genFuturePrice(asset,year,month){
 function getPrice(asset,year,month){
   const pts=PRICE_PTS[asset];
   if(!pts)return 0;
-  let price = 0;
-  if(year>2026||(year===2026&&month>3)) price = genFuturePrice(asset,year,month);
-  else {
-    const val=year*12+month;
-    let lo=null,hi=null;
-    for(const p of pts){
-      const v=p[0]*12+p[1];
-      if(v<=val)lo=p;
-      if(v>=val&&!hi)hi=p;
-    }
-    if(!lo) price = 0;
-    else if(!hi||hi===lo) price = lo[2];
-    else {
-      const t=(val-(lo[0]*12+lo[1]))/((hi[0]*12+hi[1])-(lo[0]*12+lo[1]));
-      price = lo[2]+(hi[2]-lo[2])*t;
-    }
+  if(year>2026||(year===2026&&month>3))return genFuturePrice(asset,year,month);
+  const val=year*12+month;
+  let lo=null,hi=null;
+  for(const p of pts){
+    const v=p[0]*12+p[1];
+    if(v<=val)lo=p;
+    if(v>=val&&!hi)hi=p;
   }
-  return price * getModEffect('multiply_price');
+  if(!lo)return 0;
+  if(!hi||hi===lo)return lo[2];
+  const t=(val-(lo[0]*12+lo[1]))/((hi[0]*12+hi[1])-(lo[0]*12+lo[1]));
+  return lo[2]+(hi[2]-lo[2])*t;
 }
 
 function assetAvail(id,y,m){
@@ -1080,25 +1062,25 @@ const FUT_EVENTS=[
 //  GAME DATA: Jobs, Houses, Items, Helpers, Businesses
 // ═══════════════════════════════════════════════════════════
 const JOBS=[
-  {id:'dogs',es:'Pasear perros',en:'Dog walking',emoji:'🐕',base:[15,40],req:null,unlock:2008,dur:1.5},
-  {id:'lawn',es:'Cortar césped',en:'Lawn mowing',emoji:'🌿',base:[20,50],req:null,unlock:2008,dur:4},
-  {id:'pizza',es:'Repartir pizza',en:'Pizza delivery',emoji:'🍕',base:[25,55],req:null,unlock:2008,dur:5},
-  {id:'car',es:'Lavar coches',en:'Car washing',emoji:'🚗',base:[20,45],req:null,unlock:2008,dur:4},
-  {id:'market',es:'Vender en mercado',en:'Market vendor',emoji:'🛒',base:[30,80],req:null,unlock:2008,dur:6},
-  {id:'guard',es:'Guardia seguridad',en:'Security guard',emoji:'🛡',base:[40,100],req:null,unlock:2010,dur:10},
-  {id:'code',es:'Programar webs',en:'Web development',emoji:'💻',base:[80,250],req:'pc',unlock:2009,dur:12},
-  {id:'mine',es:'Minar Bitcoin',en:'Mine Bitcoin',emoji:'⛏',base:[0,0],req:'btc_exists',unlock:2009,sp:'mine',dur:5},
-  {id:'mine2',es:'Mining Rig',en:'Mining Rig',emoji:'🖥',base:[0,0],req:'rig',unlock:2013,sp:'rig_mine',dur:5},
-  {id:'trade',es:'Day trading',en:'Day trading',emoji:'📈',base:[0,0],req:'pc',unlock:2010,sp:'trade',dur:4},
-  {id:'uber',es:'Conductor Uber',en:'Uber driver',emoji:'🚕',base:[50,120],req:'phone',unlock:2014,dur:8},
-  {id:'infl',es:'Influencer',en:'Influencer',emoji:'📱',base:[20,600],req:'phone',unlock:2017,sp:'influencer',dur:10},
-  {id:'defi',es:'Yield Farming',en:'Yield Farming',emoji:'🌾',base:[0,0],req:'eth_exists',unlock:2020,sp:'defi',dur:8},
-  {id:'ai',es:'Consultor IA',en:'AI Consultant',emoji:'🤖',base:[200,700],req:'pc',unlock:2023,dur:22},
-  {id:'remote',es:'Trabajo remoto',en:'Remote work',emoji:'🏠',base:[100,350],req:'pc',unlock:2020,dur:15},
-  {id:'cloud',es:'Servidor nube',en:'Cloud server',emoji:'☁️',base:[0,0],req:'server',unlock:2015,sp:'server',dur:8},
-  {id:'crypto_analyst',es:'Analista crypto',en:'Crypto analyst',emoji:'🔍',base:[150,500],req:'pc',unlock:2018,dur:15},
-  {id:'nft',es:'Crear NFTs',en:'Create NFTs',emoji:'🖼',base:[50,2000],req:'pc',unlock:2021,sp:'influencer',dur:18},
-  {id:'quant',es:'Trading cuantitativo',en:'Quant trading',emoji:'🧮',base:[500,2000],req:'pc',unlock:2019,sp:'trade',dur:28},
+  {id:'dogs',es:'Pasear perros',en:'Dog walking',emoji:'🐕',base:[15,40],req:null,unlock:2008},
+  {id:'lawn',es:'Cortar césped',en:'Lawn mowing',emoji:'🌿',base:[20,50],req:null,unlock:2008},
+  {id:'pizza',es:'Repartir pizza',en:'Pizza delivery',emoji:'🍕',base:[25,55],req:null,unlock:2008},
+  {id:'car',es:'Lavar coches',en:'Car washing',emoji:'🚗',base:[20,45],req:null,unlock:2008},
+  {id:'market',es:'Vender en mercado',en:'Market vendor',emoji:'🛒',base:[30,80],req:null,unlock:2008},
+  {id:'guard',es:'Guardia seguridad',en:'Security guard',emoji:'🛡',base:[40,100],req:null,unlock:2010},
+  {id:'code',es:'Programar webs',en:'Web development',emoji:'💻',base:[80,250],req:'pc',unlock:2009},
+  {id:'mine',es:'Minar Bitcoin',en:'Mine Bitcoin',emoji:'⛏',base:[0,0],req:'btc_exists',unlock:2009,sp:'mine'},
+  {id:'mine2',es:'Mining Rig',en:'Mining Rig',emoji:'🖥',base:[0,0],req:'rig',unlock:2013,sp:'rig_mine'},
+  {id:'trade',es:'Day trading',en:'Day trading',emoji:'📈',base:[0,0],req:'pc',unlock:2010,sp:'trade'},
+  {id:'uber',es:'Conductor Uber',en:'Uber driver',emoji:'🚕',base:[50,120],req:'phone',unlock:2014},
+  {id:'infl',es:'Influencer',en:'Influencer',emoji:'📱',base:[20,600],req:'phone',unlock:2017,sp:'influencer'},
+  {id:'defi',es:'Yield Farming',en:'Yield Farming',emoji:'🌾',base:[0,0],req:'eth_exists',unlock:2020,sp:'defi'},
+  {id:'ai',es:'Consultor IA',en:'AI Consultant',emoji:'🤖',base:[200,700],req:'pc',unlock:2023},
+  {id:'remote',es:'Trabajo remoto',en:'Remote work',emoji:'🏠',base:[100,350],req:'pc',unlock:2020},
+  {id:'cloud',es:'Servidor nube',en:'Cloud server',emoji:'☁️',base:[0,0],req:'server',unlock:2015,sp:'server'},
+  {id:'crypto_analyst',es:'Analista crypto',en:'Crypto analyst',emoji:'🔍',base:[150,500],req:'pc',unlock:2018},
+  {id:'nft',es:'Crear NFTs',en:'Create NFTs',emoji:'🖼',base:[50,2000],req:'pc',unlock:2021,sp:'influencer'},
+  {id:'quant',es:'Trading cuantitativo',en:'Quant trading',emoji:'🧮',base:[500,2000],req:'pc',unlock:2019,sp:'trade'},
 ];
 
 const HOUSES=[
@@ -1134,8 +1116,8 @@ const SHOP_ITEMS=[
 
 
 // ═══════════════════════════════════════════════════════════
-//  HELPER CONFIG SHIMS — delegate to v5.0 functions at bottom
-//  (v5.0 hMoneyConf / hCrimeConf defined later; shims ensure
+//  HELPER CONFIG SHIMS — delegate to v4.1 functions at bottom
+//  (v4.1 hMoneyConf / hCrimeConf defined later; shims ensure
 //   old code calling these names still works at runtime)
 // ═══════════════════════════════════════════════════════════
 function helperMoneyConfig(lv){
@@ -1329,28 +1311,12 @@ function defaultState(){
 // ═══════════════════════════════════════════════════════════
 //  SAVE / LOAD
 // ═══════════════════════════════════════════════════════════
-// Compatibility layer for storage
-const storage = {
-  get: async (key) => {
-    if (window.storage && window.storage.get) return await window.storage.get(key, false);
-    return { value: localStorage.getItem(key) };
-  },
-  set: async (key, val) => {
-    if (window.storage && window.storage.set) return await window.storage.set(key, val, false);
-    return localStorage.setItem(key, val);
-  },
-  delete: async (key) => {
-    if (window.storage && window.storage.delete) return await window.storage.delete(key, false);
-    return localStorage.removeItem(key);
-  }
-};
-
 async function saveGame(silent){
   try{
     const data={...G,firedEvents:[...G.firedEvents],pl:{...G.pl}};
     // Sync secrets
     data.secretsFound=SECRET_ZONES.map(z=>z.found);
-    await storage.set(SAVE_KEY,JSON.stringify(data));
+    await window.storage.set(SAVE_KEY,JSON.stringify(data),false);
     if(!silent)toast(t('saved'),'g');
     return true;
   }catch(e){if(!silent)toast(t('save_err'),'r');return false;}
@@ -1358,7 +1324,7 @@ async function saveGame(silent){
 
 async function loadGame(){
   try{
-    const r=await storage.get(SAVE_KEY);
+    const r=await window.storage.get(SAVE_KEY,false);
     if(r&&r.value){
       const d=JSON.parse(r.value);
       d.firedEvents=new Set(d.firedEvents||[]);
@@ -1390,11 +1356,11 @@ async function loadGame(){
 }
 
 async function deleteSave(){
-  try{await storage.delete(SAVE_KEY);}catch(e){}
+  try{await window.storage.delete(SAVE_KEY,false);}catch(e){}
 }
 
 async function checkSaveExists(){
-  try{const r=await storage.get(SAVE_KEY);return !!(r&&r.value);}catch(e){return false;}
+  try{const r=await window.storage.get(SAVE_KEY,false);return !!(r&&r.value);}catch(e){return false;}
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1516,7 +1482,7 @@ function drawFrame(dt){
   }
 }
 // ═══════════════════════════════════════════════════════════
-//  SPRITES v5.0 — Enhanced tile & character rendering
+//  SPRITES v4.2 — Enhanced tile & character rendering
 // ═══════════════════════════════════════════════════════════
 // Tile types: 0=grass,1=water,2=path,3=tree,4=flower,
 //  5=building ground,6=sand,7=dock,8=rock,9=bush,10=crops
@@ -1664,7 +1630,7 @@ function drawHouseSprite(px,py,h,owned){
 }
 
 function drawPlayerSprite(px,py){
-  // Delegate to v5.0 skin-aware renderer if available
+  // Delegate to v4.1 skin-aware renderer if available
   if(typeof drawPlayerV41==='function'&&G&&G.skin){drawPlayerV41(px,py);return;}
   const S=TILE,c=ctx2d,a=G.pl&&G.pl.anim?G.pl.anim:0,Q=G.quality;
   const b=G.animations?Math.sin(a*6)*2:0,lg=G.animations?Math.sin(a*9)*4:0;
@@ -1755,7 +1721,6 @@ function startTick(){
 
 function advanceDay(){
   G.day++;
-  G.daysPlayed = (G.daysPlayed || 0) + 1;
   const dims=[31,28,31,30,31,30,31,31,30,31,30,31];
   const leap=G.year%4===0&&(G.year%100!==0||G.year%400===0);
   const max=(G.month===2&&leap)?29:dims[G.month-1];
@@ -1763,8 +1728,6 @@ function advanceDay(){
   if(G.month>12){G.month=1;G.year++;onNewYear();}
   // Passive income
   const pInc=calcPassive();G.money+=pInc/30;
-  // Mod bonus money per day
-  G.money += getModSum('add_money_per_day')/30;
   // God mode
   if(G.godMode)G.money+=1000/30;
   // Money helper: auto income + auto-trade
@@ -1794,7 +1757,7 @@ function calcPassive(){
   if(G.items.server)p+=Math.round(getPrice('btc',G.year,G.month)*0.0002);
   if(G.items.satellite)p*=1.5;
   if(G.items.quantum)p*=3;
-  // v5.0 money helper passive multiplier
+  // v4.1 money helper passive multiplier
   if(G.helperMoney>0){const mc=hMoneyConf(G.helperMoney-1);p*=mc.passMult;}
   // Legacy compat
   const mgrBonus=[0,1.2,1.4,1.7,2.2,3];
@@ -1834,7 +1797,7 @@ function checkHistEvents(){
     if(G.year===ev.y&&G.month===ev.m){fireEvent(ev);return false;}
     return true;
   });
-  // Check G.futEvQueue (v5.0)
+  // Check G.futEvQueue (v4.1)
   if(G.futEvQueue){
     G.futEvQueue=G.futEvQueue.filter(ev=>{
       if(G.year===ev.y&&G.month===ev.m){fireEvent(ev);return false;}
@@ -1907,7 +1870,7 @@ function netWorth(){
 }
 
 function discountMult(){
-  // v5.0: discount comes from money helper level
+  // v4.1: discount comes from money helper level
   const lv=G.helperMoney||0;
   if(lv>=40)return 0.5;
   if(lv>=25)return 0.65;
@@ -2008,7 +1971,7 @@ async function ai(prompt){
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-3-5-sonnet-20241022',max_tokens:900,
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,
         messages:[{role:'user',content:prompt}]})
     });
     const d=await r.json();
@@ -2034,9 +1997,8 @@ function getJobPay(j){
   if(j.sp)return null;
   const yb=(G.year-2008)*2.5;
   const qb=G.items.quantum?10:G.items.satellite?3:1;
-  const modPayMult = getModEffect('multiply_pay');
-  return [Math.round((j.base[0]+yb)*G.earningsMultiplier*qb*modPayMult),
-          Math.round((j.base[1]+yb*1.5)*G.earningsMultiplier*qb*modPayMult)];
+  return [Math.round((j.base[0]+yb)*G.earningsMultiplier*qb),
+          Math.round((j.base[1]+yb*1.5)*G.earningsMultiplier*qb)];
 }
 
 async function doWork(){
@@ -2047,9 +2009,6 @@ async function doWork(){
     [{label:t('cancel'),fn:closeModal}]);
   avail.forEach(j=>{
     let desc='';
-    const durLabel = j.dur <= 2 ? '⚡ Rápido' : j.dur <= 6 ? '🕐 Normal' : j.dur <= 15 ? '🕑 Lento' : '🐢 Muy lento';
-    const lv = G.jobLevels?.[j.id] || 0;
-
     if(j.sp==='mine')desc=`BTC @${fmtE(Math.round(getPrice('btc',G.year,G.month)))}`;
     else if(j.sp==='rig_mine')desc='Mining Rig x5';
     else if(j.sp==='trade')desc=lang==='es'?'Riesgo':'Risky';
@@ -2057,13 +2016,7 @@ async function doWork(){
     else if(j.sp==='defi')desc='ETH Yield';
     else if(j.sp==='server')desc=lang==='es'?'Ingresos pasivos':'Passive income';
     else{const p=getJobPay(j);desc=`${fmtE(p[0])}–${fmtE(p[1])}`;}
-
-    addOpt(`
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span>${j.emoji} ${j[lang]||j.es} <span style="color:#555">— ${desc}</span></span>
-        <span style="font-size:13px;color:#333;">${durLabel}${lv > 0 ? ` · ⭐ Nv.${lv}` : ''}</span>
-      </div>
-    `,()=>execJob(j),'g');
+    addOpt(`${j.emoji} ${j[lang]||j.es} <span style="color:#555">— ${desc}</span>`,()=>execJob(j),'g');
   });
   if(locked.length){
     const div=document.createElement('div');
@@ -2077,40 +2030,6 @@ async function doWork(){
 async function execJob(j){
   document.getElementById('mcont').innerHTML='';
   setLoad(true);clearBtns();
-
-  // v5: Job duration and progress bar
-  if(j.dur){
-    const dur = j.dur * 1000;
-    const start = Date.now();
-    document.getElementById('mcont').innerHTML = `
-      <div style="font-family:VT323,monospace;font-size:20px;text-align:center;margin-bottom:10px;">
-        ${j.emoji} ${j[lang]||j.es}...
-      </div>
-      <div style="background:#111;border:2px solid #333;height:24px;width:100%;position:relative;overflow:hidden;">
-        <div id="job-progress" style="background:var(--green);height:100%;width:0%;transition:width 0.1s linear;"></div>
-      </div>
-      <div id="job-timer" style="font-family:VT323,monospace;font-size:16px;text-align:right;margin-top:4px;color:#555;">
-        ${j.dur}s
-      </div>
-    `;
-
-    await new Promise(resolve => {
-      const interval = setInterval(() => {
-        const elapsed = Date.now() - start;
-        const pct = Math.min(100, (elapsed / dur) * 100);
-        const remaining = Math.max(0, Math.ceil((dur - elapsed) / 1000));
-        const progEl = document.getElementById('job-progress');
-        const timeEl = document.getElementById('job-timer');
-        if(progEl) progEl.style.width = pct + '%';
-        if(timeEl) timeEl.textContent = remaining + 's';
-        if(elapsed >= dur){
-          clearInterval(interval);
-          resolve();
-        }
-      }, 100);
-    });
-    document.getElementById('mcont').innerHTML = '';
-  }
 
   if(j.sp==='mine'||j.sp==='rig_mine'){
     const mult=j.sp==='rig_mine'?5:1;
@@ -2167,11 +2086,7 @@ async function execJob(j){
   setLoad(false);
   document.getElementById('mcont').innerHTML=narr||`${j.emoji} +${fmtE(earn)}`;
   G.totalEarned+=earn;
-  addBtn(`✅ ${t('collect')} ${fmtE(earn)}`,()=>{
-    G.money+=earn;
-    G.jobLevels[j.id] = (G.jobLevels[j.id] || 0) + 1;
-    closeModal();toast(`+${fmtE(earn)} 💰`,'');updateHUD();
-  },'g');
+  addBtn(`✅ ${t('collect')} ${fmtE(earn)}`,()=>{G.money+=earn;closeModal();toast(`+${fmtE(earn)} 💰`,'');updateHUD();},'g');
   addBtn(t('close'),closeModal);
 }
 
@@ -2246,7 +2161,7 @@ function openTrade(a,p){
     addOpt(`🛒 Comprar ${amt} ${a.unit}  →  ${fmtE(cost)}`,canBuy?()=>{
       G.money-=cost;
       G.portfolio[a.id]=parseFloat(((G.portfolio[a.id]||0)+amt).toFixed(8));
-      G.totalSpent=(G.totalSpent||0)+cost;
+      G.totalSpent+=cost;
       (G.purchaseHistory=G.purchaseHistory||[]).push({d:`${G.year}-${G.month}`,item:`${amt} ${a.unit}`,cost});
       toast(`✅ +${amt} ${a.unit}  −${fmtE(cost)}`,'b');
       updateHUD();openTrade(a,getPrice(a.id,G.year,G.month));
@@ -2292,7 +2207,7 @@ function doBuyCustom(assetId,effP){
   if(G.money<cost){toast(t('no_funds'),'r');return;}
   G.money-=cost;
   G.portfolio[assetId]=parseFloat(((G.portfolio[assetId]||0)+amt).toFixed(8));
-  G.totalSpent=(G.totalSpent||0)+cost;
+  G.totalSpent+=cost;
   toast(`✅ +${amt}  −${fmtE(cost)}`,'b');
   updateHUD();
   const a=ASSETS.find(x=>x.id===assetId);
@@ -2311,7 +2226,7 @@ function openBizMenu(){
     addOpt(`${biz.emoji} ${biz[lang]||biz.es} <span style="color:#555">${fmtE(cost)} → +${fmtE(biz.income)}/día</span>`,()=>{
       if(G.money<cost){toast(t('no_funds'),'r');return;}
       showConfirm(`${t('confirm_buy')}\n${biz[lang]||biz.es} por ${fmtE(cost)}`,()=>{
-        G.money-=cost;G.businesses.push({...biz});G.totalSpent=(G.totalSpent||0)+cost;
+        G.money-=cost;G.businesses.push({...biz});G.totalSpent+=cost;
         G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:biz[lang]||biz.es,cost});
         toast(`🏢 +${biz[lang]||biz.es}`,'g');updateHUD();openBizMenu();
       });
@@ -2336,7 +2251,6 @@ const CRIMES=[
 async function doCrime(){
   const clv=G.helperCrime||0;
   const cc=clv>0?hCrimeConf(clv):{successBonus:0,arrestRed:0,fineRed:0};
-  const modRiskRed = getModEffect('reduce_risk'); // e.g. 0.5 means half risk
   let html=`<div style="font-family:VT323,monospace;font-size:17px;color:#ff4444;margin-bottom:8px">⭐ ${G.wanted}/5${clv>0?` · 🔪 Nv.${clv} (+${Math.round(cc.successBonus*100)}% éxito)`:''}</div>`;
   openModal(lang==='es'?'🔪 ACTIVIDADES ILEGALES':'🔪 ILLEGAL ACTIVITIES',html,[{label:t('cancel'),fn:closeModal}]);
   CRIMES.forEach(c=>{
@@ -2344,8 +2258,7 @@ async function doCrime(){
     const unlock=c.unlock||2008;
     if(G.year<unlock){addOpt(`${c[lang]||c.es} <span style="color:#222">${t('unlock')} ${unlock}</span>`,null,'',true);return;}
     const reward=c.reward||c.r||[100,500];
-    const risk = (c.risk || 0.4) * modRiskRed;
-    const baseSucc=clamp((1-risk)-(G.wanted*0.07)+cc.successBonus,0.02,0.98);
+    const baseSucc=clamp((1-(c.risk||0.4))-(G.wanted*0.07)+cc.successBonus,0.02,0.98);
     addOpt(`${c[lang]||c.es} <span style="color:#555">${fmtE(reward[0])}–${fmtE(reward[1])} · ${Math.round(baseSucc*100)}%</span>`,()=>execCrime(c,baseSucc),'r');
   });
 }
@@ -2361,7 +2274,6 @@ async function execCrime(cr,successChance){
   clearBtns();
   if(succ){
     G.money+=earn;G.wanted=Math.min(5,G.wanted+(cr.stars||1));
-    G.crimesCommitted = (G.crimesCommitted || 0) + 1;
     addBtn(`✅ ${fmtE(earn)}`,()=>{closeModal();toast(`+${fmtE(earn)}`,'');updateHUD();},'r');
   }else{
     G.wanted=Math.min(5,G.wanted+(cr.stars||1)+1);
@@ -2424,7 +2336,7 @@ async function buyHouse(id){
   const disc=discountMult();const effP=Math.round(h.price*disc);
   if(G.money<effP){toast(t('no_funds'),'r');return;}
   showConfirm(`${t('confirm_buy')}\n${h[lang]||h.es} — ${fmtE(effP)}`,async()=>{
-    G.money-=effP;G.ownedHouses.push(id);G.totalSpent=(G.totalSpent||0)+effP;
+    G.money-=effP;G.ownedHouses.push(id);G.totalSpent+=effP;
     G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:h[lang]||h.es,cost:effP});
     closeModal();
     const narr=await ai(`RPG cómico España ${G.year}. Compré "${h[lang]||h.es}" por ${fmtE(effP)}. 2 frases épicas y graciosas. Sin asteriscos.`);
@@ -2452,7 +2364,7 @@ function doShop(){
     addOpt(`${item[lang]||item.es} <span style="color:#555">${fmtE(cost)}</span><br><span style="font-size:15px;color:#333">${desc}</span>`,()=>{
       if(!can){toast(t('no_funds'),'r');return;}
       showConfirm(`${t('confirm_buy')}\n${item[lang]||item.es} — ${fmtE(cost)}`,()=>{
-        G.money-=cost;G.items[item.id]=true;G.totalSpent=(G.totalSpent||0)+cost;
+        G.money-=cost;G.items[item.id]=true;G.totalSpent+=cost;
         G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:item[lang]||item.es,cost});
         toast(`✅ ${lang==='es'?'Comprado':'Purchased'}!`,'b');updateHUD();doShop();
       });
@@ -2479,83 +2391,34 @@ function watchAd(){
   const today=`${G.year}-${G.month}-${G.day}`;
   if(G.adDate!==today){G.adDate=today;G.adWatched=0;}
   if(G.adWatched>=5){toast(lang==='es'?'Límite diario: 5 anuncios':'Daily limit: 5 ads','r');return;}
-
-  openModal(lang==='es'?'📺 ANUNCIO REAL':'📺 REAL AD',
-    `<div style="font-family:VT323,monospace;font-size:19px;text-align:center;background:#000;padding:10px;border:1px solid #333;">
-      <div id="adsense-unit" style="min-height:250px; background:#111; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-        <!-- AdSense Display Unit -->
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-6754320079973999"
-             data-ad-slot="1234567890"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <div id="ad-loading-text" style="color:#444; font-size:12px;">Cargando anuncio de Google...</div>
-      </div>
-
-      <div id="ad-timer-cont" style="margin-top:10px;">
-        <div id="ad-countdown" style="color:var(--gold);font-size:20px;">15</div>
-        <div style="height:4px;background:#222;width:100%;margin-top:5px;">
-          <div id="ad-prog" style="height:100%;background:var(--gold);width:0%;transition:width 1s linear;"></div>
-        </div>
-      </div>
-      <div id="ad-skip-container" style="margin-top:10px; height:30px;"></div>
+  openModal(lang==='es'?'📺 ANUNCIO':'📺 ADVERTISEMENT',
+    `<div style="font-family:VT323,monospace;font-size:19px;text-align:center">
+    <div style="font-size:40px;animation:spin 2s linear infinite;display:inline-block">📺</div><br><br>
+    ${lang==='es'?'Anuncio en reproducción...':'Ad playing...'}<br>
+    <div id="ad-countdown" style="color:var(--gold);font-size:28px;margin-top:8px">10</div>
     </div>`,[]
   );
-
-  // Trigger AdSense
-  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error(e); }
-
-  let count=15;
+  let count=10;
   const interval=setInterval(()=>{
-    count--;
-    const el=document.getElementById('ad-countdown');
-    const prog=document.getElementById('ad-prog');
-    if(el) el.textContent = count;
-    if(prog) prog.style.width = ((15-count)/15*100) + '%';
-
-    if(count === 10){
-      const skipCont = document.getElementById('ad-skip-container');
-      if(skipCont) skipCont.innerHTML = `<button class="bb" style="font-size:6px;padding:3px 6px;opacity:0.5;cursor:not-allowed;" id="btn-skip-ad" disabled>Skip in 5...</button>`;
-    }
-    if(count <= 5 && count > 0){
-      const btnSkip = document.getElementById('btn-skip-ad');
-      if(btnSkip) btnSkip.textContent = `Skip in ${count}...`;
-    }
-    if(count === 0){
-       const btnSkip = document.getElementById('btn-skip-ad');
-       if(btnSkip) {
-         btnSkip.textContent = 'SKIP ➔';
-         btnSkip.disabled = false;
-         btnSkip.style.opacity = '1';
-         btnSkip.style.cursor = 'pointer';
-         btnSkip.classList.add('g');
-         btnSkip.onclick = () => finishAd();
-       }
-    }
-
-    if(count<=-1){ // Auto-finish if not skipped
+    count--;const el=document.getElementById('ad-countdown');
+    if(el)el.textContent=count;
+    if(count<=0){
       clearInterval(interval);
-      finishAd();
+      G.money+=500;G.adWatched++;G.adDate=today;
+      G.totalAdsWatched=(G.totalAdsWatched||0)+1;
+      closeModal();toast('+€500 📺','g');updateHUD();
+      if(G.totalAdsWatched===20){
+        const acb=document.getElementById('ac-btn');if(acb)acb.style.display='';
+        setTimeout(()=>toast('⚡ Auto Clicker desbloqueado! Ve a Ayudantes','c'),400);
+      }
     }
   },1000);
-
-  function finishAd(){
-    clearInterval(interval);
-    G.money+=500;G.adWatched++;G.adDate=today;
-    G.totalAdsWatched=(G.totalAdsWatched||0)+1;
-    closeModal();toast('+€500 📺','g');updateHUD();
-    if(G.totalAdsWatched===20){
-      const acb=document.getElementById('ac-btn');if(acb)acb.style.display='';
-      setTimeout(()=>toast('⚡ Auto Clicker desbloqueado! Ve a Ayudantes','c'),400);
-    }
-  }
 }
 
 // ═══════════════════════════════════════════════════════════
-//  HELPERS — stub (overridden by v5.0 at bottom of file)
+//  HELPERS — stub (overridden by v4.1 at bottom of file)
 // ═══════════════════════════════════════════════════════════
-function doHelpers(){/* overridden by v5.0 below */}
+function doHelpers(){/* overridden by v4.1 below */}
 
 // ═══════════════════════════════════════════════════════════
 //  INTERACT (E key)
@@ -3226,7 +3089,7 @@ function gameFrame(ts){
 // ═══════════════════════════════════════════════════════════
 //  INIT & START
 // ═══════════════════════════════════════════════════════════
-// init_legacy removed — replaced by v5.0 init below
+// init_legacy removed — replaced by v4.1 init below
 
 async function newGame(){
   G=defaultStateV41();G.lang=lang;G.firedEvents=new Set();
@@ -3239,10 +3102,10 @@ async function loadAndStart(){
   startGame();
 }
 
-// (legacy startGame removed — v5.0+ version below handles startup)
+// (legacy startGame removed — v4.1+ version below handles startup)
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — SETUP SCREEN
+//  v4.1 — SETUP SCREEN
 // ═══════════════════════════════════════════════════════════
 const LANGS_ALL=['es','en','ca','fr','de','pt'];
 const LANG_NAMES={es:'Español',en:'English',ca:'Català',fr:'Français',de:'Deutsch',pt:'Português'};
@@ -3289,7 +3152,7 @@ async function ssStart(load){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — DEFAULT STATE WITH SEED & NEW FIELDS
+//  v4.1 — DEFAULT STATE WITH SEED & NEW FIELDS
 // ═══════════════════════════════════════════════════════════
 function genSeed(){return 'xxxx-xxxx'.replace(/x/g,()=>(Math.random()*16|0).toString(16));}
 function defaultStateV41(){
@@ -3317,11 +3180,6 @@ function defaultStateV41(){
     purchaseHistory:[],
     godMode:false,
     earningsMultiplier:1,
-    jobLevels:{}, // {jobId: level}
-    daysPlayed:0,
-    totalEarned:0,
-    totalSpent:0,
-    crimesCommitted:0,
     quality:ssQuality||1,
     animations:true,
     skin:'default',
@@ -3332,7 +3190,7 @@ function defaultStateV41(){
 }
 async function loadAndStartQuiet(){
   try{
-    const r=await storage.get(SAVE_KEY);
+    const r=await window.storage.get(SAVE_KEY,false);
     if(r&&r.value){
       const d=JSON.parse(r.value);
       d.firedEvents=new Set(d.firedEvents||[]);
@@ -3347,8 +3205,6 @@ async function loadAndStartQuiet(){
       if(!d.gameRules)d.gameRules={crimePenalty:true,jailTime:true,marketRisk:true,pvpEnabled:false,cheatsAllowed:false};
       if(!d.purchaseHistory)d.purchaseHistory=[];
       if(!d.earningsMultiplier)d.earningsMultiplier=1;
-      if(!d.jobLevels)d.jobLevels={};
-      if(!d.daysPlayed)d.daysPlayed=0;
       if(!d.godMode)d.godMode=false;
       if(!d.portfolio.bnb)d.portfolio.bnb=0;
       if(!d.portfolio.xrp)d.portfolio.xrp=0;
@@ -3361,7 +3217,7 @@ async function loadAndStartQuiet(){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — EXPORT / IMPORT SAVE
+//  v4.1 — EXPORT / IMPORT SAVE
 // ═══════════════════════════════════════════════════════════
 function exportSave(){
   if(!G){toast('No hay partida activa','r');return;}
@@ -3407,7 +3263,7 @@ function importSave(ev){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — HELPERS: 2 × 50 LEVELS
+//  v4.1 — HELPERS: 2 × 50 LEVELS
 // ═══════════════════════════════════════════════════════════
 function hMoneyConf(lv){
   // lv = 0..49 (cost for upgrading FROM lv to lv+1)
@@ -3428,7 +3284,7 @@ function hCrimeConf(lv){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — AUTO CLICKER (separate from doHelpers)
+//  v4.1 — AUTO CLICKER (separate from doHelpers)
 // ═══════════════════════════════════════════════════════════
 function toggleAutoClicker(){
   if(!G)return;
@@ -3467,7 +3323,7 @@ function helperAutoTradeV41(){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — HELPERS UI (50-level)
+//  v4.1 — HELPERS UI (50-level)
 // ═══════════════════════════════════════════════════════════
 function doHelpers(){
   const ml=G.helperMoney||0,cl=G.helperCrime||0;
@@ -3500,7 +3356,7 @@ function doHelpers(){
   openModal('🤖 AYUDANTES',ms.h+cs.h+acH,[{label:'Cerrar',fn:closeModal}]);
   if(ms.can){addBtn(`💰 Mejorar Nv.${ms.lv+1} — ${fmtE(ms.effC)}`,()=>{
     showConfirm(`Comprar 💰 Helper Nv.${ms.lv+1} — ${fmtE(ms.effC)}`,()=>{
-      G.money-=ms.effC;G.helperMoney=(G.helperMoney||0)+1;G.totalSpent=(G.totalSpent||0)+ms.effC;
+      G.money-=ms.effC;G.helperMoney=(G.helperMoney||0)+1;G.totalSpent+=ms.effC;
       G.purchaseHistory=G.purchaseHistory||[];G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:`💰 Helper Nv.${G.helperMoney}`,cost:ms.effC});
       toast(`💰 Helper Nv.${G.helperMoney}`,'g');updateHUD();doHelpers();
     });
@@ -3509,7 +3365,7 @@ function doHelpers(){
   else addBtn(`💰 Faltan ${fmtE(ms.effC-Math.round(G.money))}`,null,'',true);
   if(cs.can){addBtn(`🔪 Mejorar Nv.${cs.lv+1} — ${fmtE(cs.effC)}`,()=>{
     showConfirm(`Comprar 🔪 Helper Nv.${cs.lv+1} — ${fmtE(cs.effC)}`,()=>{
-      G.money-=cs.effC;G.helperCrime=(G.helperCrime||0)+1;G.totalSpent=(G.totalSpent||0)+cs.effC;
+      G.money-=cs.effC;G.helperCrime=(G.helperCrime||0)+1;G.totalSpent+=cs.effC;
       G.purchaseHistory=G.purchaseHistory||[];G.purchaseHistory.push({d:`${G.year}-${G.month}`,item:`🔪 Helper Nv.${G.helperCrime}`,cost:cs.effC});
       toast(`🔪 Helper Nv.${G.helperCrime}`,'r');updateHUD();doHelpers();
     });
@@ -3532,7 +3388,7 @@ function execCrimeV41(cr){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — SKINS
+//  v4.1 — SKINS
 // ═══════════════════════════════════════════════════════════
 const SKINS=[
   {id:'default',name:'Default',body:'#cc3333',skin:'#f4bc7a',hair:'#4a2808'},
@@ -3572,7 +3428,7 @@ function openSkinChooser(){
   document.getElementById('skin-ov').classList.add('open');
 }
 
-// Override drawPlayer to use v5.0 skins
+// Override drawPlayer to use v4.1 skins
 const _origDrawPlayer=typeof drawPlayer==='function'?drawPlayer:null;
 function drawPlayerV41(px,py){
   const S=TILE,c=ctx2d,a=G.pl&&G.pl.anim?G.pl.anim:0;
@@ -3590,7 +3446,7 @@ function drawPlayerV41(px,py){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — MULTIPLAYER LOCAL
+//  v4.1 — MULTIPLAYER LOCAL
 // ═══════════════════════════════════════════════════════════
 let mpPlayers=[],mpActiveIdx=0,mpEnabled=false;
 
@@ -3657,7 +3513,7 @@ function startComp(){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — CHAT
+//  v4.1 — CHAT
 // ═══════════════════════════════════════════════════════════
 function toggleChat(){
   const el=document.getElementById('chat-ov');
@@ -3677,7 +3533,7 @@ function addChatMsg(who,text){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — MOD SYSTEM
+//  v4.1 — MOD SYSTEM
 // ═══════════════════════════════════════════════════════════
 let loadedMods=[];
 function openModPanel(){
@@ -3693,156 +3549,24 @@ function openModPanel(){
   ta.style.cssText='width:100%;height:80px;background:#060606;border:1px solid #2a0a2a;color:#cc88ff;font-family:monospace;font-size:12px;padding:5px;resize:none;';
   ta.placeholder='Pega JSON del mod aquí...';
   mb.appendChild(ta);
-
-  const btnRow = document.createElement('div');
-  btnRow.style.display = 'flex';
-  btnRow.style.gap = '5px';
-  btnRow.style.marginTop = '6px';
-
-  const btnLoad=document.createElement('button');btnLoad.className='bb p';btnLoad.textContent='📦 Cargar';
-  btnLoad.onclick=()=>{if(ta.value)applyMod(ta.value);};
-
-  const btnCreate=document.createElement('button');btnCreate.className='bb b';btnCreate.textContent='🛠 Crear Mod';
-  btnCreate.onclick=()=>openModCreator();
-
-  btnRow.appendChild(btnLoad);
-  btnRow.appendChild(btnCreate);
-  mb.appendChild(btnRow);
-
+  const btn=document.createElement('button');btn.className='bb p';btn.style.marginTop='6px';btn.textContent='📦 Cargar mod';
+  btn.onclick=()=>{if(ta.value)applyMod(ta.value);};mb.appendChild(btn);
   document.getElementById('mod-ov').classList.add('open');
 }
-
-let editingMod = null;
-function openModCreator(){
-  if(!editingMod) editingMod = { name: 'Mi Super Mod', version: '1.0', rules: [] };
-
-  let rulesHtml = '';
-  editingMod.rules.forEach((r, i) => {
-    rulesHtml += `
-      <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center;background:#111;padding:4px;">
-        <select onchange="updateModRule(${i},'type',this.value)" style="background:#000;color:#00ff41;border:1px solid #333;font-size:12px;flex:1;">
-          <option value="multiply_pay" ${r.type==='multiply_pay'?'selected':''}>💰 Mult. Paga</option>
-          <option value="multiply_price" ${r.type==='multiply_price'?'selected':''}>📊 Mult. Precio</option>
-          <option value="add_money_per_day" ${r.type==='add_money_per_day'?'selected':''}>💵 Dinero/Día</option>
-          <option value="reduce_risk" ${r.type==='reduce_risk'?'selected':''}>🛡 Reducir Riesgo</option>
-        </select>
-        <input type="number" value="${r.value}" onchange="updateModRule(${i},'value',this.value)" style="width:50px;background:#000;color:#ffd700;border:1px solid #333;font-size:12px;">
-        <button onclick="removeModRule(${i})" style="background:#440000;color:#fff;border:none;padding:2px 5px;cursor:pointer;">✕</button>
-      </div>`;
-  });
-
-  openModal('🛠 CREADOR DE MODS', `
-    <div style="font-family:VT323,monospace;font-size:16px;color:#888;">
-      <label>Nombre:</label>
-      <input id="mc-name" value="${editingMod.name}" onchange="editingMod.name=this.value" style="width:100%;background:#111;border:1px solid #333;color:var(--purple);margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-size:10px;color:var(--green);">REGLAS (${editingMod.rules.length})</span>
-        <button class="bb g" style="font-size:6px;padding:2px 5px;" onclick="addModRule()">+ REGLA</button>
-      </div>
-      <div id="mc-rules-cont" style="max-height:120px;overflow-y:auto;border:1px solid #222;padding:4px;margin-bottom:8px;">
-        ${rulesHtml || '<div style="text-align:center;color:#333;font-size:12px;">Sin reglas</div>'}
-      </div>
-    </div>
-  `, [
-    {label:'💾 Aplicar', fn:()=>{
-      applyMod(JSON.stringify(editingMod));
-      editingMod = null;
-      closeModal();
-    }, cls:'p'},
-    {label:'📋 Copiar', fn:()=>{
-      navigator.clipboard.writeText(JSON.stringify(editingMod, null, 2));
-      toast('📋 JSON Copiado', 'g');
-    }},
-    {label:'✕', fn:()=>{ editingMod=null; closeModal(); }}
-  ]);
-}
-
-window.addModRule = () => {
-  editingMod.rules.push({type:'multiply_pay', value: 2.0});
-  openModCreator();
-};
-window.updateModRule = (i, field, val) => {
-  editingMod.rules[i][field] = field==='value'?parseFloat(val):val;
-};
-window.removeModRule = (i) => {
-  editingMod.rules.splice(i, 1);
-  openModCreator();
-};
-function getModEffect(type){
-  let effect = 1;
-  if(!G || !G.loadedMods) return effect;
-  G.loadedMods.forEach(mJson => {
-    try {
-      const mod = JSON.parse(mJson);
-      if(mod.rules && Array.isArray(mod.rules)){
-        mod.rules.forEach(rule => {
-          if(rule.type === type) effect *= rule.value;
-        });
-      }
-    } catch(e){}
-  });
-  return effect;
-}
-
-function getModSum(type){
-  let sum = 0;
-  if(!G || !G.loadedMods) return sum;
-  G.loadedMods.forEach(mJson => {
-    try {
-      const mod = JSON.parse(mJson);
-      if(mod.rules && Array.isArray(mod.rules)){
-        mod.rules.forEach(rule => {
-          if(rule.type === type) sum += rule.value;
-        });
-      }
-    } catch(e){}
-  });
-  return sum;
-}
-
-function applyMod(jsonStr, isSilent=false){
+function applyMod(jsonStr){
   try{
     const mod=JSON.parse(jsonStr);
     if(!mod.name)throw new Error('Mod sin nombre');
-
-    // Apply initial bonuses
     if(mod.moneyBonus&&G)G.money+=mod.moneyBonus;
     if(mod.multiplier&&G)G.earningsMultiplier=(G.earningsMultiplier||1)*mod.multiplier;
-
-    // Append content to game arrays
-    if(mod.jobs && Array.isArray(mod.jobs)){
-      mod.jobs.forEach(j => {
-        if(!JOBS.find(ex => ex.id === j.id)) JOBS.push(j);
-      });
-    }
-    if(mod.items && Array.isArray(mod.items)){
-      mod.items.forEach(i => {
-        if(!SHOP_ITEMS.find(ex => ex.id === i.id)) SHOP_ITEMS.push(i);
-      });
-    }
-    if(mod.businesses && Array.isArray(mod.businesses)){
-      mod.businesses.forEach(b => {
-        if(!BUSINESSES.find(ex => ex.id === b.id)) BUSINESSES.push(b);
-      });
-    }
-
-    // Persist in G
-    if(G && !isSilent){
-      G.loadedMods = G.loadedMods || [];
-      if(!G.loadedMods.find(m => m.name === mod.name)) G.loadedMods.push(jsonStr);
-    }
-
-    if(!loadedMods.find(m => m.name === mod.name)) {
-      loadedMods.push({name:mod.name,version:mod.version||'1.0'});
-    }
-
-    if(!isSilent) toast(`🔌 Mod "${mod.name}" cargado`,'p');
-    if(G) updateHUD();
-  }catch(e){ if(!isSilent) toast('❌ Mod error: '+e.message,'r'); console.error(e); }
+    loadedMods.push({name:mod.name,version:mod.version||'1.0'});
+    toast(`🔌 Mod "${mod.name}" cargado`,'p');
+    if(G)updateHUD();
+  }catch(e){toast('❌ Mod error: '+e.message,'r');}
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — RULES PANEL
+//  v4.1 — RULES PANEL
 // ═══════════════════════════════════════════════════════════
 function openRulesPanel(){
   const rb=document.getElementById('rules-body');if(!rb)return;
@@ -3869,7 +3593,7 @@ function openRulesPanel(){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — SETTINGS TABS (extended)
+//  v4.1 — SETTINGS TABS (extended)
 // ═══════════════════════════════════════════════════════════
 // Override renderSettingsContent to add new tabs
 const _origRenderSettings=typeof renderSettingsContent==='function'?renderSettingsContent:null;
@@ -3918,7 +3642,7 @@ function renderSettingsContent(){
     }
   } else if(activeTab==='about'){
     const ab=document.createElement('div');ab.style.cssText='font-family:VT323,monospace;font-size:17px;line-height:1.9;padding:12px;color:#555;';
-    ab.innerHTML=`<span style="color:#ffd700">JOGONÍA v5.0</span><br>
+    ab.innerHTML=`<span style="color:#ffd700">JOGONÍA v4.1</span><br>
       19 trabajos · 9 activos · 9 propiedades<br>
       18 eventos históricos · 2 islas · Casino<br>
       Ayudantes x50 · Multijugador local<br>
@@ -3949,7 +3673,7 @@ function openSettings(){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — INIT OVERRIDE
+//  v4.1 — INIT OVERRIDE
 // ═══════════════════════════════════════════════════════════
 async function init(){
   // Detect mobile
@@ -3966,7 +3690,7 @@ async function init(){
   applyLang();
 }
 
-// Override startGame to handle v5.0 new features
+// Override startGame to handle v4.1 new features
 function startGame(){
   // Hide all screens, show game
   const ss=document.getElementById('setup-screen');if(ss)ss.style.display='none';
@@ -3984,10 +3708,6 @@ function startGame(){
   if(G.secretsFound)SECRET_ZONES.forEach((z,i)=>z.found=G.secretsFound[i]||false);
   // Multiplayer
   if(G.multiMode&&!mpEnabled)initMpMode();
-  // Re-apply mods
-  if(G.loadedMods && Array.isArray(G.loadedMods)){
-    G.loadedMods.forEach(mJson => applyMod(mJson, true));
-  }
   // Auto-clicker btn
   const acb=document.getElementById('ac-btn');
   if(acb)acb.style.display=(G.totalAdsWatched||0)>=20?'':'none';
@@ -4008,7 +3728,7 @@ function startGame(){
   });
   // Welcome modal
   setTimeout(()=>{
-    openModal(lang==='es'?'🏠 BIENVENIDO A JOGONÍA v5.0':'🏠 WELCOME TO JOGONÍA v5.0',
+    openModal(lang==='es'?'🏠 BIENVENIDO A JOGONÍA v4.2':'🏠 WELCOME TO JOGONÍA v4.2',
       `<div style="font-family:'VT323',monospace;font-size:17px;line-height:1.9">
       📅 Año: <span style="color:#ff8800">2008</span> · 💶 <span style="color:#ffd700">€50</span><br>
       <span style="color:#00ff41">⚒ 1-Trabajar</span> → gana dinero<br>
@@ -4062,7 +3782,7 @@ window.addEventListener('resize',()=>{
 
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — BROADCAST CHANNEL MULTIPLAYER (same-device tabs)
+//  v4.2 — BROADCAST CHANNEL MULTIPLAYER (same-device tabs)
 // ═══════════════════════════════════════════════════════════
 let bc=null; // BroadcastChannel instance
 let mpMyName='Jugador 1';
@@ -4206,156 +3926,107 @@ function tradeSend(asset,amount,toName){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — PAYMENT MODAL (Info + Real Stripe/PayPal Guide)
+//  v4.2 — PAYMENT MODAL (Info + Links)
 // ═══════════════════════════════════════════════════════════
 function openPayments(){
-  openModal('💳 TIENDA DE MONEDAS', `
-    <div style="font-family:'VT323',monospace;font-size:17px;color:#888;">
-      <div style="margin-bottom:10px;">Comprar paquetes con PayPal:</div>
-      <div class="opt g" onclick="initPayPal(1000, 0.99)">📦 1.000 Monedas <span style="float:right;">0.99€</span></div>
-      <div class="opt g" onclick="initPayPal(5000, 3.99)">📦 5.000 Monedas <span style="float:right;">3.99€</span></div>
-      <div class="opt g" onclick="initPayPal(20000, 9.99)">📦 20.000 Monedas <span style="float:right;">9.99€</span></div>
-
-      <div id="paypal-container" style="margin-top:10px; min-height:150px; display:none; background:#111; padding:10px; border:1px solid #333;">
-         <div id="paypal-button-container"></div>
-         <button class="bb r" style="width:100%; margin-top:5px;" onclick="document.getElementById('paypal-container').style.display='none'">CANCELAR</button>
-      </div>
-
-      <div style="font-size:12px;color:#444;margin-top:10px;border-top:1px solid #222;padding-top:5px;">
-        ℹ️ Para recibir dinero real, cambia <b>TEST_CLIENT_ID</b> en el código por tu Client ID de PayPal Developer.
-      </div>
+  openModal('💳 MONETIZACIÓN',
+    `<div style="font-family:'VT323',monospace;font-size:17px;line-height:1.8;color:#888">
+    <div style="font-size:9px;color:var(--gold);margin-bottom:8px">MÉTODOS DE PAGO</div>
+    <div style="background:#0a0a0a;border:1px solid #1a1a1a;padding:8px;margin-bottom:6px;">
+      <div style="color:#ffd700;font-size:8px">📱 BIZUM</div>
+      <div style="color:#555;font-size:15px">Para integrar Bizum como pago real se requiere:<br>
+      • Cuenta empresarial en banco español<br>
+      • Contrato con Bizum for Business<br>
+      • Backend con API propia<br>
+      • Esto NO se puede hacer solo en HTML</div>
     </div>
-  `, [{label:'Cerrar', fn:closeModal}]);
-}
-
-function initPayPal(amount, price) {
-  const container = document.getElementById('paypal-container');
-  container.style.display = 'block';
-  document.getElementById('paypal-button-container').innerHTML = '';
-
-  if(window.paypal) {
-    paypal.Buttons({
-      createOrder: (data, actions) => {
-        return actions.order.create({
-          purchase_units: [{
-            amount: { value: price.toString(), currency_code: 'EUR' },
-            description: `${amount} Jogonía Coins`
-          }]
-        });
-      },
-      onApprove: (data, actions) => {
-        return actions.order.capture().then(details => {
-          G.money += amount;
-          updateHUD();
-          toast(`✅ Pago completado por ${details.payer.name.given_name}`, 'g');
-          container.style.display = 'none';
-        });
-      },
-      onError: (err) => {
-        toast('❌ Error en el pago', 'r');
-        console.error(err);
-      }
-    }).render('#paypal-button-container');
-  } else {
-    toast('PayPal SDK no cargado', 'r');
-  }
-}
-
-async function processPayment(amount, price){
-  openModal('💳 PROCESANDO PAGO', `
-    <div style="font-family:'VT323',monospace;font-size:18px;text-align:center;">
-      <div style="margin-bottom:15px;">Estás comprando <span style="color:var(--green);">${amount.toLocaleString()} monedas</span> por <span style="color:var(--gold);">${price}€</span></div>
-
-      <div id="payment-step" style="background:#111;padding:15px;border:1px solid #333;margin-bottom:10px;">
-        <label style="display:block;text-align:left;font-size:14px;color:#555;">Número de Tarjeta:</label>
-        <div style="background:#000;border:1px solid #222;padding:5px;text-align:left;color:#ffd700;letter-spacing:2px;">**** **** **** 4242</div>
-        <div style="display:flex;gap:10px;margin-top:5px;">
-          <div style="flex:1;">
-            <label style="display:block;text-align:left;font-size:12px;color:#555;">EXP:</label>
-            <div style="background:#000;border:1px solid #222;padding:5px;">12/28</div>
-          </div>
-          <div style="flex:1;">
-            <label style="display:block;text-align:left;font-size:12px;color:#555;">CVC:</label>
-            <div style="background:#000;border:1px solid #222;padding:5px;">***</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="payment-status" style="color:var(--gold);font-size:16px;">Esperando confirmación de Bizum/Banco...</div>
+    <div style="background:#0a0a0a;border:1px solid #1a1a1a;padding:8px;margin-bottom:6px;">
+      <div style="color:#ffd700;font-size:8px">💳 STRIPE / PAYPAL</div>
+      <div style="color:#555;font-size:15px">• Stripe: stripe.com — fácil integración<br>
+      • PayPal: paypal.com/es<br>
+      • Ambos requieren cuenta verificada + backend</div>
     </div>
-  `, []);
-
-  await new Promise(r => setTimeout(r, 2000));
-  const statusEl = document.getElementById('payment-status');
-  if(statusEl) statusEl.textContent = 'Verificando fondos...';
-
-  await new Promise(r => setTimeout(r, 2000));
-  if(statusEl) {
-    statusEl.innerHTML = '<span style="color:var(--green);">✅ PAGO COMPLETADO</span>';
-    G.money += amount;
-    updateHUD();
-    toast(`💳 +${amount.toLocaleString()} Monedas`, 'g');
-  }
-
-  addBtn('Cerrar', closeModal, 'g');
+    <div style="background:#0a0a0a;border:1px solid #1a1a1a;padding:8px;margin-bottom:6px;">
+      <div style="color:#ffd700;font-size:8px">📺 ANUNCIOS (ADMOB / ADSENSE)</div>
+      <div style="color:#555;font-size:15px">• Google AdSense: adsense.google.com<br>
+      • Para app móvil: Google AdMob<br>
+      • Requieren aprobación + política de privacidad</div>
+    </div>
+    <div style="font-size:14px;color:#444;border-top:1px solid #111;padding-top:6px;margin-top:6px">
+    ℹ️ Para implementar pagos reales, convierte este juego en una app React Native o web con backend Node.js + Stripe SDK.</div>
+    </div>`,
+    [{label:'Cerrar',fn:closeModal}]
+  );
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — GAME DESCRIPTION FOR AI HANDOFF
+//  v4.2 — GAME DESCRIPTION FOR AI HANDOFF
 // ═══════════════════════════════════════════════════════════
 const GAME_DESCRIPTION=`
-JOGONÍA v5.1 — MEMORIA INTEGRAL PARA IA (VERSIÓN 5.1)
-=====================================================
+JOGONÍA v4.2 — Descripción completa para desarrollo por IA externa
+===================================================================
 
-MECÁNICAS v5.1:
-- TIEMPO DINÁMICO: Simulación 2008-2026 con precios históricos y post-2026 procedural.
-- TRABAJOS CON PROGRESO Y NIVELES: Barras de progreso reales. Se gana experiencia (Nv.) por trabajo.
-- MOD RULES: Los mods ahora usan reglas (multiply_pay, multiply_price, reduce_risk, add_money_per_day).
-- MONETIZACIÓN REAL: Google AdSense real y pagos PayPal (Smart Buttons).
-- ESTADÍSTICAS: Tracking de días jugados, crímenes, ganancias y gastos totales.
+ESTILO: RPG económico pixel art retro. Canvas 2D. HTML puro, sin frameworks.
+Fuentes: Press Start 2P (títulos), VT323 (texto). Paleta: negro/dorado/verde neón.
 
-ESTRUCTURA DE DATOS (Objeto G):
-- year, month, day, daysPlayed: Tiempo.
-- money, totalEarned, totalSpent: Contabilidad.
-- jobLevels: Niveles de experiencia por cada trabajo {id: lv}.
-- loadedMods: JSON strings con reglas activas.
-- portfolio: btc, eth, solana, gold, sp500, apple, tesla, bnb, xrp.
-- helperMoney/helperCrime: Niveles (0-50).
+MECÁNICAS PRINCIPALES:
+- El jugador empieza en 2008 con €50 y debe comprar todas las propiedades.
+- El tiempo avanza automáticamente (1x–100x) con eventos históricos reales.
+- Precios históricos reales de BTC, ETH, Oro, S&P500, Apple, Tesla, Solana, BNB, XRP.
+- Eventos reales: Lehman 2008, Bitcoin genesis 2009, COVID 2020, FTX 2022, etc.
+- Post-2026: eventos generados proceduralmente.
 
-REGLAS ACTIVAS DE MODS:
-- multiply_pay: Multiplicador global de paga.
-- multiply_price: Multiplicador de precios de activos.
-- reduce_risk: Multiplicador de riesgo de crimen (ej: 0.5 = mitad de riesgo).
-- add_money_per_day: Bono pasivo extra.
+SISTEMA DE DINERO:
+- Trabajos (19): pasear perros → consultor IA. Se desbloquean por año.
+- Mercado: 9 activos con precios históricos interpolados.
+- Negocios (12): generan ingresos pasivos diarios.
+- Crimen (8 tipos): sistema de 5 estrellas → multa + cárcel.
+- Casino: Blackjack automático + Ruleta con premios en BTC.
+
+AYUDANTES (2 × 50 niveles):
+- Ayudante de Dinero: auto-income/día, multiplicador pasivo (x4.9 al max), auto-trade.
+- Ayudante de Robos: +1%→+500% éxito crimen, -95% arresto, -90% multas.
+- Auto Clicker: se desbloquea con 20 anuncios vistos. Genera dinero automático.
+
+MAPAS:
+- Isla principal: 30×25 tiles. 9 casas, 8 NPCs ambulantes, policía si wanted≥3.
+- Isla secundaria: 60×10 tiles. Acceso por barco desde el muelle este.
+- 4 zonas secretas: +€50.000 cada una (2 por isla).
+- Tiles: grass(0), water(1), path(2), tree(3), flower(4), building(5), sand(6), dock(7), rock(8), bush(9), crops(10).
+
+CASINO: Blackjack (draw automático, cartas animadas) + Ruleta (spin animado, premios BTC).
+
+GRÁFICOS:
+- Canvas 2D, drawTile() con 11 tipos de tile y variación por seed.
+- drawPlayerSprite() con 8 skins (color body/skin/hair).
+- drawNPC(): 8 transeúntes animados con movimiento aleatorio.
+- drawHouseSprite(): 9 casas con sombras, ventanas, bandera si owned.
+- Calidades: 0=baja, 1=normal, 2=alta, 3=épica.
+
+AJUSTES: 4 calidades gráficas, 6 idiomas (ES/EN/CA/FR/DE/PT), velocidades 1x–100x.
+
+MULTIJUGADOR:
+- Local (2 jugadores alternos): switch de estado.
+- Online tabs: BroadcastChannel API — misma red/dispositivo.
+- Chat en tiempo real entre tabs. Intercambio de activos.
+- 8 skins seleccionables por jugador.
+
+SISTEMA DE MODS (JSON):
+{"name":"NombreMod","version":"1.0","moneyBonus":10000,"multiplier":2.0,"jobs":[],"items":[]}
+
+SEMILLA: cada partida tiene UUID único para exportar/importar entre versiones.
+GUARDADO: window.storage (Claude chat) + Export JSON + Import JSON.
+
+TECNOLOGÍA: HTML5 puro. Canvas 2D. Sin librerías. Compatible móvil y PC.
+Admin password: admin-2026-beta
 `;
 
 function openGameDescription(){
-  let dynamicDesc = GAME_DESCRIPTION;
-  if(G){
-    dynamicDesc += `\n\nESTADO ACTUAL DEL JUEGO (MEMORIA PARA IA):\n`;
-    dynamicDesc += `--------------------------------------\n`;
-    dynamicDesc += `Semilla: ${G.seed}\n`;
-    dynamicDesc += `Fecha: ${G.day} ${monthStr(G.month)} ${G.year}\n`;
-    dynamicDesc += `Dinero: ${fmtE(G.money)}\n`;
-    dynamicDesc += `Patrimonio: ${fmtE(netWorth())}\n`;
-    dynamicDesc += `Portfolio: ${JSON.stringify(G.portfolio)}\n`;
-    dynamicDesc += `Propiedades: ${G.ownedHouses.join(', ')}\n`;
-    dynamicDesc += `Buscado: ${G.wanted}/5\n`;
-    dynamicDesc += `Días Jugados: ${G.daysPlayed}\n`;
-    dynamicDesc += `Total Ganado: ${fmtE(G.totalEarned)}\n`;
-    dynamicDesc += `Crímenes: ${G.crimesCommitted}\n`;
-    dynamicDesc += `Ayudantes: Dinero Nv.${G.helperMoney}, Crimen Nv.${G.helperCrime}\n`;
-    dynamicDesc += `Mods cargados: ${loadedMods.map(m=>m.name).join(', ')}\n`;
-    dynamicDesc += `Niveles de Trabajo: ${JSON.stringify(G.jobLevels)}\n`;
-    dynamicDesc += `--------------------------------------\n`;
-    dynamicDesc += `Instrucción para IA: Utiliza estos datos para continuar la simulación exactamente desde este punto.`;
-  }
-
-  openModal('📄 DESCRIPCIÓN DEL JUEGO (IA)',
-    `<div style="font-family:'VT323',monospace;font-size:15px;line-height:1.7;color:#666;white-space:pre-wrap;overflow-wrap:break-word">${dynamicDesc}</div>`,
+  openModal('📄 DESCRIPCIÓN DEL JUEGO',
+    `<div style="font-family:'VT323',monospace;font-size:15px;line-height:1.7;color:#666;white-space:pre-wrap;overflow-wrap:break-word">${GAME_DESCRIPTION}</div>`,
     [
-      {label:'📋 Copiar todo',fn:()=>{
-        try{navigator.clipboard.writeText(dynamicDesc);toast('📋 Copiado!','g');}catch(e){toast('Selecciona y copia manualmente','r');}
+      {label:'📋 Copiar',fn:()=>{
+        try{navigator.clipboard.writeText(GAME_DESCRIPTION);toast('📋 Copiado!','g');}catch(e){toast('Selecciona y copia manualmente','r');}
       },cls:'g'},
       {label:'Cerrar',fn:closeModal}
     ]
@@ -4363,10 +4034,10 @@ function openGameDescription(){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — MOD DOCUMENTATION
+//  v4.2 — MOD DOCUMENTATION
 // ═══════════════════════════════════════════════════════════
 function openModDocs(){
-  const docs=`DOCUMENTACIÓN DE MODS — JOGONÍA v5.0
+  const docs=`DOCUMENTACIÓN DE MODS — JOGONÍA v4.2
 ======================================
 Lenguaje: JavaScript (ES6+), HTML5 Canvas
 
@@ -4427,7 +4098,7 @@ REFERENCIA RÁPIDA DE FUNCIONES:
 }
 
 // ═══════════════════════════════════════════════════════════
-//  v5.0 — INIT NPC + BC ON START handled directly in startGame above
+//  v4.2 — INIT NPC + BC ON START handled directly in startGame above
 
 // Expose new functions to HTML
 window.openPayments=openPayments;
