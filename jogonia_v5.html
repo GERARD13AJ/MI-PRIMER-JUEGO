@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>JOGONÍA v4.1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>JOGONÍA v5</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Orbitron:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;}
@@ -14,9 +14,13 @@
   --bg:#060606;--panel:#0d0d0d;--border:#1a1a1a;--text:#e0ddd0;
   --sh:2px 2px 0 #000;--tile:32px;
   --ui-scale:1;
+  --dpr:1;
 }
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
-  font-family:'Press Start 2P',monospace;color:var(--text);touch-action:none;}
+  font-family:'Press Start 2P',monospace;color:var(--text);touch-action:none;
+  -webkit-tap-highlight-color:transparent;}
+/* Fullscreen safe area */
+#game{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:#0a0a0a;}
 ::-webkit-scrollbar-thumb{background:var(--g2);}
@@ -67,7 +71,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 /* ═══ HUD ═══ */
 #hud{display:flex;align-items:stretch;background:#070707;
   border-bottom:2px solid var(--g2);flex-shrink:0;overflow-x:auto;
-  min-height:48px;max-height:56px;scrollbar-width:none;}
+  min-height:44px;max-height:60px;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;}
 #hud::-webkit-scrollbar{display:none;}
 .hc{display:flex;flex-direction:column;justify-content:center;
   padding:3px 9px;border-right:1px solid #151515;flex-shrink:0;min-width:0;}
@@ -110,7 +115,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   pointer-events:none;opacity:0;transition:opacity .3s;z-index:5;}
 
 /* ═══ BOTTOM BAR ═══ */
-#bot{display:flex;gap:4px;padding:5px 7px;background:#070707;
+#more-menu.open{display:flex!important;}
+#bot{display:flex;gap:3px;padding:4px 6px;background:#070707;
   border-top:2px solid var(--g2);flex-shrink:0;flex-wrap:wrap;align-items:center;}
 .bb{background:#0a0a0a;border:2px solid var(--g2);color:var(--gold);
   font-family:'Press Start 2P',monospace;font-size:7px;padding:5px 9px;
@@ -316,18 +322,48 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 #confirm-btns{display:flex;gap:8px;}
 
 /* ═══ RESPONSIVE ═══ */
-@media(max-width:600px){
-  .hc{padding:2px 6px;}.hv{font-size:8px;}.hl{font-size:4px;}
-  .bb{font-size:6px;padding:5px 7px;}
-  #bot{gap:3px;padding:4px 5px;}
+/* ═══ RESPONSIVE — portrait phone ═══ */
+@media(max-width:480px){
+  .hc{padding:2px 5px;min-width:0;}
+  .hv{font-size:8px;letter-spacing:0;}
+  .hl{font-size:4px;}
+  .bb{font-size:6px;padding:5px 6px;}
+  #bot{gap:2px;padding:3px 4px;}
   .mob-hide{display:none!important;}
   #dpad{display:block;}
+  #hud{min-height:40px;}
 }
-@media(max-width:380px){
+@media(max-width:360px){
   .bb{font-size:5px;padding:4px 5px;}
   .hv{font-size:7px;}
+  .hc{padding:2px 4px;}
+}
+/* ═══ LANDSCAPE PHONE ═══ */
+@media(max-height:480px) and (orientation:landscape){
+  #hud{min-height:36px;max-height:40px;}
+  .hv{font-size:8px;}
+  #bot{padding:2px 4px;gap:2px;}
+  .bb{font-size:5px;padding:3px 6px;}
+  #map-wrap{min-height:60px;}
+}
+/* ═══ TABLET / IPAD ═══ */
+@media(min-width:601px) and (max-width:1024px){
+  .hv{font-size:9px;}
+  .bb{font-size:7px;padding:6px 9px;}
 }
 @media(min-width:601px){.pc-hide{display:none!important;}}
+/* ═══ 720p / 1080p ═══ */
+@media(min-width:1280px){
+  .hv{font-size:11px;}
+  .hc{padding:4px 12px;}
+  .bb{font-size:8px;padding:7px 12px;}
+  #hud{min-height:54px;max-height:64px;}
+}
+@media(min-width:1920px){
+  .hv{font-size:13px;}
+  .bb{font-size:9px;padding:8px 14px;}
+  #hud{min-height:60px;max-height:72px;}
+}
 /* ═══ SETUP SCREEN v4.1 ═══ */
 #setup-scr{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;
   background:radial-gradient(ellipse at 50% 30%,#0a1400,#000 70%);}
@@ -383,48 +419,70 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 <body>
 
 <!-- QUALITY/LANG SETUP SCREEN -->
-<div id="setup-screen" style="position:fixed;inset:0;background:#000;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 30%,#0a1500,#000 70%);">
+<div id="setup-screen" style="position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;background:radial-gradient(ellipse at 50% 30%,#0a1500,#000 70%);overflow-y:auto;padding:12px 8px;">
   <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,65,.04)1px,transparent 1px),linear-gradient(90deg,rgba(0,255,65,.04)1px,transparent 1px);background-size:28px 28px;pointer-events:none;"></div>
-  <div style="font-size:clamp(16px,5vw,42px);color:var(--gold);letter-spacing:5px;z-index:1;text-shadow:0 0 30px var(--gold),3px 3px 0 var(--g2);animation:glow 2s ease-in-out infinite;">JOGONÍA</div>
-  <div style="font-size:clamp(6px,1.5vw,9px);color:var(--green);letter-spacing:3px;z-index:1;">v4.1 — SIMULACIÓN ECONÓMICA DEFINITIVA</div>
-  <!-- Language -->
-  <div style="z-index:1;text-align:center;">
-    <div style="font-size:7px;color:#444;margin-bottom:7px;letter-spacing:2px;">🌐 IDIOMA / LANGUAGE</div>
-    <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;" id="lang-btns">
-      <button class="ss-btn act" onclick="ssLang('es')">🇪🇸 ES</button>
-      <button class="ss-btn" onclick="ssLang('en')">🇬🇧 EN</button>
-      <button class="ss-btn" onclick="ssLang('ca')">🏴 CA</button>
-      <button class="ss-btn" onclick="ssLang('fr')">🇫🇷 FR</button>
-      <button class="ss-btn" onclick="ssLang('de')">🇩🇪 DE</button>
-      <button class="ss-btn" onclick="ssLang('pt')">🇵🇹 PT</button>
+  <!-- LOGO -->
+  <div style="font-size:clamp(22px,7vw,48px);color:var(--gold);letter-spacing:5px;z-index:1;text-shadow:0 0 30px var(--gold),3px 3px 0 var(--g2);animation:glow 2s ease-in-out infinite;margin-bottom:4px;">JOGONÍA</div>
+  <div style="font-size:clamp(7px,2vw,10px);color:var(--green);letter-spacing:3px;z-index:1;margin-bottom:16px;">v5 — RPG ECONÓMICO 2008→∞</div>
+
+  <!-- MAIN CARD -->
+  <div style="z-index:1;background:#050505;border:1px solid #1a1a1a;padding:14px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:12px;">
+
+    <!-- Language — persists independently -->
+    <div>
+      <div style="font-size:6px;color:#444;letter-spacing:2px;margin-bottom:6px;">🌐 IDIOMA / LANGUAGE</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;" id="ss-langs">
+        <button class="ss-btn" id="ssl-es" onclick="ssLang('es')">🇪🇸 ES</button>
+        <button class="ss-btn" id="ssl-en" onclick="ssLang('en')">🇬🇧 EN</button>
+        <button class="ss-btn" id="ssl-ca" onclick="ssLang('ca')">🏴 CA</button>
+        <button class="ss-btn" id="ssl-fr" onclick="ssLang('fr')">🇫🇷 FR</button>
+        <button class="ss-btn" id="ssl-de" onclick="ssLang('de')">🇩🇪 DE</button>
+        <button class="ss-btn" id="ssl-pt" onclick="ssLang('pt')">🇵🇹 PT</button>
+      </div>
     </div>
-  </div>
-  <!-- Quality -->
-  <div style="z-index:1;text-align:center;">
-    <div style="font-size:7px;color:#444;margin-bottom:7px;letter-spacing:2px;" id="sq-lbl">⚡ CALIDAD GRÁFICA</div>
-    <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;">
-      <button class="ss-btn" id="sq-0" onclick="ssQual(0)">🐢 BAJA</button>
-      <button class="ss-btn act" id="sq-1" onclick="ssQual(1)">⚡ NORMAL</button>
-      <button class="ss-btn" id="sq-2" onclick="ssQual(2)">🚀 ALTA</button>
-      <button class="ss-btn" id="sq-3" onclick="ssQual(3)">💎 ÉPICA</button>
+
+    <!-- Quality — persists independently -->
+    <div>
+      <div style="font-size:6px;color:#444;letter-spacing:2px;margin-bottom:6px;" id="sq-lbl">⚡ CALIDAD GRÁFICA</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="ss-btn" id="sq-0" onclick="ssQual(0)">🐢 BAJA</button>
+        <button class="ss-btn" id="sq-1" onclick="ssQual(1)">⚡ NORMAL</button>
+        <button class="ss-btn" id="sq-2" onclick="ssQual(2)">🚀 ALTA</button>
+        <button class="ss-btn" id="sq-3" onclick="ssQual(3)">💎 ÉPICA</button>
+      </div>
+      <div style="font-family:'VT323',monospace;font-size:14px;color:#333;margin-top:4px;" id="sq-desc">Equilibrio rendimiento / calidad visual</div>
     </div>
-    <div style="font-family:'VT323',monospace;font-size:15px;color:#333;margin-top:5px;" id="sq-desc">Equilibrio rendimiento / calidad visual</div>
-  </div>
-  <!-- Mode -->
-  <div style="z-index:1;text-align:center;">
-    <div style="font-size:7px;color:#444;margin-bottom:7px;letter-spacing:2px;">🎮 MODO</div>
-    <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;">
-      <button class="ss-btn act" id="ssm1" onclick="ssMode('single')">👤 1 JUGADOR</button>
-      <button class="ss-btn" id="ssm2" onclick="ssMode('multi')">👥 LOCAL MULTI</button>
+
+    <!-- Mode — persists independently -->
+    <div>
+      <div style="font-size:6px;color:#444;letter-spacing:2px;margin-bottom:6px;">🎮 MODO DE JUEGO</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="ss-btn" id="ssm1" onclick="ssMode('single')">👤 1 JUGADOR</button>
+        <button class="ss-btn" id="ssm2" onclick="ssMode('multi')">👥 MULTIJUGADOR</button>
+      </div>
     </div>
+
+    <!-- Resolution -->
+    <div>
+      <div style="font-size:6px;color:#444;letter-spacing:2px;margin-bottom:6px;">🖥 RESOLUCIÓN</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="ss-btn" id="ssr-auto" onclick="ssRes(1)">AUTO</button>
+        <button class="ss-btn" id="ssr-075" onclick="ssRes(0.75)">0.75x</button>
+        <button class="ss-btn" id="ssr-15" onclick="ssRes(1.5)">HD</button>
+        <button class="ss-btn" onclick="toggleFullscreen()">📱 Full</button>
+      </div>
+    </div>
+
+    <div style="font-family:'VT323',monospace;font-size:13px;color:#333;" id="setup-device"></div>
   </div>
-  <div style="font-family:'VT323',monospace;font-size:14px;color:#333;z-index:1;" id="setup-device"></div>
-  <div style="display:flex;gap:8px;z-index:1;flex-wrap:wrap;justify-content:center;">
+
+  <!-- ACTION BUTTONS -->
+  <div style="display:flex;gap:8px;z-index:1;flex-wrap:wrap;justify-content:center;margin-top:12px;">
     <button class="t-btn" id="setup-new" onclick="ssStart(false)">▶ <span id="ss-start-lbl">EMPEZAR</span></button>
     <button class="t-btn sec" id="setup-load" style="display:none" onclick="ssStart(true)">📂 CONTINUAR</button>
     <button class="t-btn sec" onclick="document.getElementById('file-import').click()">📁 IMPORTAR</button>
   </div>
-  <div style="font-family:'VT323',monospace;font-size:14px;color:#333;z-index:1;" id="ss-info"></div>
+  <div style="font-family:'VT323',monospace;font-size:13px;color:#444;z-index:1;margin-top:6px;" id="ss-info"></div>
 </div>
 
 <!-- TITLE -->
@@ -493,20 +551,38 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
   </div>
 
   <div id="bot">
-    <button class="bb g" onclick="doWork()">⚒ <span id="bl-work">Trabajar</span></button>
+    <!-- Always visible: 4 main + settings + E -->
+    <button class="bb g" onclick="doWork()">⚒ <span id="bl-work">Trabajo</span></button>
     <button class="bb b" onclick="doMarket()">📊 <span id="bl-market">Mercado</span></button>
     <button class="bb r" onclick="doCrime()">🔪 <span id="bl-crime">Crimen</span></button>
-    <button class="bb" onclick="doHouses()">🏘 <span id="bl-houses">Casas</span></button>
-    <button class="bb p mob-hide" onclick="doShop()">🛒 <span id="bl-shop">Tienda</span></button>
-    <button class="bb c mob-hide" onclick="openCasino()">🎰 Casino</button>
-    <button class="bb mob-hide" onclick="doChart()">📈 <span id="bl-chart">Gráfico</span></button>
-    <button class="bb mob-hide" onclick="doNews()">📰 <span id="bl-news">Noticias</span></button>
-    <button class="bb mob-hide" onclick="doHelpers()">🤖 <span id="bl-helpers">Ayudantes</span></button>
-    <button class="bb mob-hide" onclick="doMiniGame()">🎮 Mini</button>
-    <button class="bb c" id="ac-btn" onclick="doHelpers()" style="display:none">⚡ AUTO</button>
-    <button class="bb b mob-hide" onclick="toggleChat()">💬</button>
-    <button class="bb" onclick="openSettings()">⚙</button>
+    <button class="bb p" onclick="doHelpers()">🤖 <span id="bl-helpers">Ayud.</span></button>
+    <button class="bb" id="ac-btn" onclick="doHelpers()" style="display:none">⚡</button>
+    <!-- More menu toggle -->
+    <button class="bb c" onclick="toggleMoreMenu()" id="more-btn">⋯ <span class="mob-hide">Más</span></button>
+    <!-- Quick settings -->
+    <button class="bb" onclick="openQuickSettings()">⚡⚙</button>
     <button class="bb g" onclick="interact()">E</button>
+    <!-- Hidden extras (shown in more menu) -->
+    <span id="bl-work" style="display:none"></span>
+    <span id="bl-market" style="display:none"></span>
+    <span id="bl-chart" style="display:none"></span>
+    <span id="bl-news" style="display:none"></span>
+    <span id="bl-shop" style="display:none"></span>
+    <span id="bl-houses" style="display:none"></span>
+    <span id="bl-helpers" style="display:none"></span>
+  </div>
+  <!-- More menu overlay -->
+  <div id="more-menu" style="display:none;position:fixed;bottom:52px;left:0;right:0;background:#070707;border-top:2px solid var(--g2);padding:6px 7px;z-index:50;flex-wrap:wrap;gap:4px;animation:fadeInUp .15s;">
+    <button class="bb" onclick="doHouses();toggleMoreMenu()">🏘 Casas</button>
+    <button class="bb p" onclick="doShop();toggleMoreMenu()">🛒 Tienda</button>
+    <button class="bb c" onclick="openCasino();toggleMoreMenu()">🎰 Casino</button>
+    <button class="bb" onclick="doChart();toggleMoreMenu()">📈 Gráfico</button>
+    <button class="bb" onclick="doNews();toggleMoreMenu()">📰 Noticias</button>
+    <button class="bb p" onclick="doMiniGame();toggleMoreMenu()">🎮 Mini</button>
+    <button class="bb b" onclick="toggleChat();toggleMoreMenu()">💬 Chat</button>
+    <button class="bb" onclick="openMp&&openMp();toggleMoreMenu()">👥 Multi</button>
+    <button class="bb" onclick="openSettings();toggleMoreMenu()">⚙ Ajustes</button>
+    <button class="bb" onclick="toggleMoreMenu()" style="margin-left:auto">✕</button>
   </div>
 </div>
 
@@ -664,6 +740,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
 <!-- ═══ HUD MULTIPLAYER PILL ═══ -->
 
 <script>
+if(typeof window!=="undefined"&&typeof window.formatMoney!=="function"){window.formatMoney=function(n){n=Number(n)||0;if(Math.abs(n)>=1e12)return"€"+(n/1e12).toFixed(2)+"T";if(Math.abs(n)>=1e9)return"€"+(n/1e9).toFixed(2)+"B";if(Math.abs(n)>=1e6)return"€"+(n/1e6).toFixed(2)+"M";if(Math.abs(n)>=1e3)return"€"+(n/1e3).toFixed(2)+"K";return"€"+n.toFixed(2)};}
+
 'use strict';
 // ═══════════════════════════════════════════════════════════
 //  UTILITIES
@@ -908,6 +986,31 @@ const PRICE_PTS={
   xrp:[[2013,1,0.005],[2017,12,2.5],[2018,6,0.5],[2018,12,0.3],
     [2021,4,1.8],[2022,12,0.35],[2023,12,0.6],[2024,12,2.3],
     [2025,3,2.8],[2026,3,2.1]],
+  // New cryptos v5
+  doge:[[2013,12,0.001],[2017,12,0.003],[2021,1,0.02],[2021,5,0.55],
+    [2021,12,0.18],[2022,12,0.07],[2023,12,0.10],[2024,12,0.38],
+    [2025,1,0.35],[2025,6,0.28],[2026,3,0.22]],
+  dot:[[2020,9,4],[2020,12,9],[2021,5,48],[2021,11,42],
+    [2022,12,4],[2023,12,8],[2024,6,9],[2024,12,10],
+    [2025,1,9],[2025,6,7],[2026,3,6]],
+  avax:[[2020,10,3],[2020,12,10],[2021,11,120],[2022,1,90],
+    [2022,12,12],[2023,12,36],[2024,3,55],[2024,12,42],
+    [2025,1,40],[2025,6,30],[2026,3,28]],
+  link:[[2017,9,0.1],[2018,1,1],[2019,6,4],[2020,8,19],
+    [2021,5,50],[2022,12,6],[2023,12,14],[2024,6,18],
+    [2024,12,22],[2025,1,20],[2026,3,18]],
+  matic:[[2019,4,0.01],[2021,5,2.5],[2022,1,2.3],[2022,12,0.8],
+    [2023,12,0.85],[2024,6,0.7],[2024,12,0.55],[2025,1,0.5],[2026,3,0.45]],
+  near:[[2020,10,0.5],[2021,10,12],[2022,1,17],[2022,12,1.4],
+    [2023,12,2.5],[2024,3,7],[2024,12,6],[2025,1,5.5],[2026,3,4.5]],
+  // Traditional markets v5 extras
+  nasdaq:[[2008,1,2400],[2009,3,1265],[2010,1,1950],[2012,1,2700],
+    [2015,1,4650],[2018,1,6950],[2020,3,6860],[2020,12,12800],
+    [2021,12,16000],[2022,10,10600],[2023,12,14800],[2024,12,19800],
+    [2025,1,19500],[2025,12,21000],[2026,3,20000]],
+  oil:[[2008,6,135],[2008,12,40],[2009,12,80],[2014,6,115],
+    [2015,12,37],[2020,4,15],[2020,12,48],[2021,12,73],
+    [2022,6,115],[2023,12,75],[2024,12,72],[2025,6,68],[2026,3,65]],
 };
 
 // Future price cache after 2026
@@ -955,6 +1058,8 @@ function getPrice(asset,year,month){
 }
 
 function assetAvail(id,y,m){
+  const a=ASSETS.find(x=>x.id===id);
+  if(a&&a.unlock&&y<a.unlock)return false;
   if(id==='btc')return y>2009||(y===2009&&m>=10);
   if(id==='eth')return y>2015||(y===2015&&m>=7);
   if(id==='solana')return y>=2020;
@@ -965,13 +1070,24 @@ function assetAvail(id,y,m){
 }
 
 const ASSETS=[
-  {id:'btc',name:'Bitcoin ₿',unit:'BTC',emoji:'₿'},
-  {id:'eth',name:'Ethereum Ξ',unit:'ETH',emoji:'Ξ'},
-  {id:'solana',name:'Solana ◎',unit:'SOL',emoji:'◎'},
-  {id:'bnb',name:'BNB',unit:'BNB',emoji:'⬡'},
-  {id:'xrp',name:'XRP',unit:'XRP',emoji:'✕'},
-  {id:'gold',name:'Oro 🥇',unit:'oz',emoji:'🥇'},
-  {id:'sp500',name:'S&P 500',unit:'u',emoji:'📊'},
+  // Crypto
+  {id:'btc',name:'Bitcoin ₿',unit:'BTC',emoji:'₿',cat:'crypto'},
+  {id:'eth',name:'Ethereum Ξ',unit:'ETH',emoji:'Ξ',cat:'crypto'},
+  {id:'solana',name:'Solana ◎',unit:'SOL',emoji:'◎',cat:'crypto'},
+  {id:'bnb',name:'BNB',unit:'BNB',emoji:'⬡',cat:'crypto'},
+  {id:'xrp',name:'XRP',unit:'XRP',emoji:'✕',cat:'crypto'},
+  {id:'doge',name:'Dogecoin Ð',unit:'DOGE',emoji:'🐕',cat:'crypto',unlock:2013},
+  {id:'dot',name:'Polkadot •',unit:'DOT',emoji:'•',cat:'crypto',unlock:2020},
+  {id:'avax',name:'Avalanche △',unit:'AVAX',emoji:'△',cat:'crypto',unlock:2020},
+  {id:'link',name:'Chainlink ⬡',unit:'LINK',emoji:'🔗',cat:'crypto',unlock:2017},
+  {id:'matic',name:'Polygon ⬟',unit:'MATIC',emoji:'⬟',cat:'crypto',unlock:2019},
+  {id:'near',name:'NEAR ◉',unit:'NEAR',emoji:'◉',cat:'crypto',unlock:2020},
+  // Commodities
+  {id:'gold',name:'Oro 🥇',unit:'oz',emoji:'🥇',cat:'commodity'},
+  {id:'oil',name:'Petróleo 🛢',unit:'bbl',emoji:'🛢',cat:'commodity',unlock:2008},
+  // Traditional
+  {id:'sp500',name:'S&P 500',unit:'u',emoji:'📊',cat:'stock'},
+  {id:'nasdaq',name:'NASDAQ',unit:'u',emoji:'💻',cat:'stock',unlock:2008},
   {id:'apple',name:'Apple 🍎',unit:'acc',emoji:'🍎'},
   {id:'tesla',name:'Tesla ⚡',unit:'acc',emoji:'⚡'},
 ];
@@ -1045,6 +1161,94 @@ const HIST_EVENTS=[
    es:{t:'Trump regresa a la presidencia',b:'Promete regulación favorable a las criptos. Bitcoin supera los €90.000.'},
    en:{t:'Trump returns to presidency',b:'Promises crypto-friendly regulation. Bitcoin surpasses €90,000.'},
    fx:{btc:0.18,sp500:0.04}},
+  // ─── Extra real-world events added in v5 ───
+  {y:2010,m:12,id:'btc_paridad',emoji:'💱',
+   es:{t:'Bitcoin alcanza paridad con el dólar',b:'1 BTC = $1 por primera vez. Los primeros inversores celebran.'},
+   en:{t:'Bitcoin reaches dollar parity',b:'1 BTC = $1 for the first time. Early investors celebrate.'},fx:{btc:0.3}},
+  {y:2011,m:6,id:'mt_gox_hack',emoji:'🔓',
+   es:{t:'Hackeo de Mt. Gox',b:'El mayor exchange de Bitcoin es hackeado. 25.000 BTC robados. El precio cae.'},
+   en:{t:'Mt. Gox hacked',b:'Largest Bitcoin exchange hacked. 25,000 BTC stolen. Price crashes.'},
+   fx:{btc:-0.35}},
+  {y:2012,m:11,id:'halving1',emoji:'⛏',
+   es:{t:'Primer Halving de Bitcoin',b:'La recompensa de minería cae de 50 a 25 BTC. Histórico evento deflacionario.'},
+   en:{t:'First Bitcoin Halving',b:'Mining reward drops from 50 to 25 BTC. Historic deflationary event.'},
+   fx:{btc:0.08}},
+  {y:2013,m:11,id:'btc_1000',emoji:'🚀',
+   es:{t:'Bitcoin supera los $1.000',b:'Por primera vez BTC supera los $1.000. El mundo empieza a prestar atención.'},
+   en:{t:'Bitcoin surpasses $1,000',b:'BTC surpasses $1,000 for the first time. The world starts paying attention.'},
+   fx:{btc:0.2,eth:0.1}},
+  {y:2014,m:2,id:'mtgox_quiebra',emoji:'💀',
+   es:{t:'Mt. Gox quiebra definitivamente',b:'850.000 BTC desaparecidos. El mayor escándalo cripto hasta la fecha.'},
+   en:{t:'Mt. Gox permanently collapses',b:'850,000 BTC missing. The biggest crypto scandal to date.'},
+   fx:{btc:-0.4}},
+  {y:2016,m:7,id:'eth_dao_hack',emoji:'🔨',
+   es:{t:'Hackeo del DAO de Ethereum',b:'$60M en ETH robados. Ethereum se bifurca en ETH y ETC para recuperar los fondos.'},
+   en:{t:'Ethereum DAO hack',b:'$60M in ETH stolen. Ethereum forks into ETH and ETC to recover funds.'},
+   fx:{eth:-0.25}},
+  {y:2016,m:7,id:'halving2',emoji:'⛏',
+   es:{t:'Segundo Halving Bitcoin',b:'Recompensa cae a 12.5 BTC. Históricamente precede grandes bull runs.'},
+   en:{t:'Second Bitcoin Halving',b:'Reward drops to 12.5 BTC. Historically precedes major bull runs.'},
+   fx:{btc:0.06}},
+  {y:2018,m:11,id:'bch_war',emoji:'⚔️',
+   es:{t:'Guerra de Bitcoin Cash',b:'Batalla entre BSV y BCH divide la comunidad. Todo el mercado cae.'},
+   en:{t:'Bitcoin Cash hash war',b:'BSV vs BCH battle divides the community. Entire market falls.'},
+   fx:{btc:-0.2,eth:-0.3,bnb:-0.15}},
+  {y:2019,m:6,id:'libra',emoji:'💸',
+   es:{t:'Facebook anuncia Libra',b:'Meta intenta crear su criptomoneda. Los reguladores la bloquean. BTC sube.'},
+   en:{t:'Facebook announces Libra',b:'Meta tries to create its own crypto. Regulators block it. BTC rises.'},
+   fx:{btc:0.15}},
+  {y:2020,m:5,id:'halving3',emoji:'⛏',
+   es:{t:'Tercer Halving Bitcoin',b:'Recompensa cae a 6.25 BTC. Inicia el mayor bull run hasta la fecha.'},
+   en:{t:'Third Bitcoin Halving',b:'Reward drops to 6.25 BTC. Triggers the largest bull run to date.'},
+   fx:{btc:0.12,eth:0.08}},
+  {y:2020,m:8,id:'defi_summer',emoji:'🌾',
+   es:{t:'DeFi Summer: Yield Farming explota',b:'Las finanzas descentralizadas explotan. ETH y tokens DeFi se multiplican.'},
+   en:{t:'DeFi Summer: Yield Farming explodes',b:'Decentralized finance explodes. ETH and DeFi tokens multiply.'},
+   fx:{eth:0.35,solana:0.2}},
+  {y:2021,m:2,id:'tesla_btc',emoji:'⚡',
+   es:{t:'Tesla compra Bitcoin',b:'Elon Musk compra $1.500M en Bitcoin para Tesla. BTC explota al alza.'},
+   en:{t:'Tesla buys Bitcoin',b:'Elon Musk buys $1.5B in Bitcoin for Tesla. BTC explodes upward.'},
+   fx:{btc:0.2,tesla:0.15}},
+  {y:2021,m:5,id:'china_ban',emoji:'🇨🇳',
+   es:{t:'China prohíbe el cripto',b:'China prohíbe las criptomonedas y la minería. Crash masivo en todos los activos cripto.'},
+   en:{t:'China bans crypto',b:'China bans cryptocurrencies and mining. Massive crash across all crypto assets.'},
+   fx:{btc:-0.35,eth:-0.4,solana:-0.45,bnb:-0.3}},
+  {y:2021,m:9,id:'el_salvador',emoji:'🇸🇻',
+   es:{t:'El Salvador adopta Bitcoin como moneda',b:'Primer país en adoptar BTC como moneda legal. Hito histórico mundial.'},
+   en:{t:'El Salvador adopts Bitcoin',b:'First country to adopt BTC as legal tender. Historic world milestone.'},
+   fx:{btc:0.08}},
+  {y:2022,m:5,id:'terra_luna',emoji:'🌙',
+   es:{t:'Colapso de Terra/LUNA',b:'La stablecoin UST pierde su paridad. LUNA colapsa de $80 a $0. Pánico cripto.'},
+   en:{t:'Terra/LUNA collapse',b:'UST stablecoin loses peg. LUNA collapses from $80 to $0. Crypto panic.'},
+   fx:{btc:-0.25,eth:-0.3,solana:-0.4,bnb:-0.2}},
+  {y:2022,m:7,id:'eth_merge',emoji:'🔀',
+   es:{t:'Ethereum The Merge',b:'Ethereum pasa de PoW a PoS. Reducción del 99.95% en energía consumida.'},
+   en:{t:'Ethereum The Merge',b:'Ethereum switches from PoW to PoS. 99.95% reduction in energy consumption.'},
+   fx:{eth:0.12}},
+  {y:2023,m:6,id:'blackrock_btc',emoji:'🏦',
+   es:{t:'BlackRock solicita ETF de Bitcoin',b:'El mayor gestor de activos del mundo pide un ETF de Bitcoin. Mercado reacciona.'},
+   en:{t:'BlackRock files Bitcoin ETF',b:"World's largest asset manager files Bitcoin ETF. Market reacts."},
+   fx:{btc:0.15,eth:0.08}},
+  {y:2023,m:11,id:'binance_fine',emoji:'⚖️',
+   es:{t:'Binance multada por $4.300M',b:'EEUU multa a Binance y su CEO Zhao renuncia. El cripto absorbe el golpe.'},
+   en:{t:'Binance fined $4.3B',b:'US fines Binance and CEO Zhao resigns. Crypto absorbs the blow.'},
+   fx:{btc:-0.1,bnb:-0.25}},
+  {y:2024,m:3,id:'btc_ath_2024',emoji:'🌙',
+   es:{t:'Bitcoin supera €60.000',b:'Nuevo ATH impulsado por ETFs y el halving. El mercado alcista está de vuelta.'},
+   en:{t:'Bitcoin surpasses €60,000',b:'New ATH driven by ETFs and halving. Bull market is back.'},
+   fx:{btc:0.18,eth:0.12,solana:0.25}},
+  {y:2024,m:6,id:'eth_etf',emoji:'📋',
+   es:{t:'ETF de Ethereum aprobado',b:'La SEC aprueba ETFs de Ethereum al contado. Instituciones entran en ETH.'},
+   en:{t:'Ethereum ETF approved',b:'SEC approves Ethereum spot ETFs. Institutions enter ETH.'},
+   fx:{eth:0.2,btc:0.05}},
+  {y:2024,m:11,id:'btc_100k',emoji:'💯',
+   es:{t:'¡Bitcoin supera €90.000!',b:'Bitcoin rompe máximos históricos tras las elecciones. Euforia total.'},
+   en:{t:'Bitcoin surpasses €90,000!',b:'Bitcoin breaks all-time highs after elections. Total euphoria.'},
+   fx:{btc:0.25,eth:0.18,solana:0.3}},
+  {y:2025,m:3,id:'btc_reserve',emoji:'🇺🇸',
+   es:{t:'EEUU crea reserva estratégica de Bitcoin',b:'El gobierno de EEUU declara Bitcoin como reserva estratégica nacional.'},
+   en:{t:'US creates Bitcoin strategic reserve',b:'US government declares Bitcoin as a national strategic reserve.'},
+   fx:{btc:0.3,eth:0.12}},
   {y:2026,m:1,id:'ai_boom',emoji:'🤖',
    es:{t:'Boom de la IA en 2026',b:'Las empresas de IA alcanzan valoraciones récord. El Nasdaq se dispara.'},
    en:{t:'2026 AI Boom',b:'AI companies reach record valuations. Nasdaq rockets.'},
@@ -1293,7 +1497,7 @@ function defaultState(){
   return{
     year:2008,month:1,day:1,
     money:50,
-    portfolio:{btc:0,eth:0,solana:0,bnb:0,xrp:0,gold:0,sp500:0,apple:0,tesla:0},
+    portfolio:{btc:0,eth:0,solana:0,bnb:0,xrp:0,doge:0,dot:0,avax:0,link:0,matic:0,near:0,gold:0,oil:0,sp500:0,nasdaq:0,apple:0,tesla:0},
     items:{phone:false,pc:false,rig:false,server:false,smarthome:false,satellite:false,quantum:false},
     // NEW: 2 unified helpers (0–50 levels each)
     helperMoney:0,   // Money helper level
@@ -1327,21 +1531,34 @@ function defaultState(){
 //  SAVE / LOAD
 // ═══════════════════════════════════════════════════════════
 async function saveGame(silent){
+  if(!G)return false;
   try{
-    const data={...G,firedEvents:[...G.firedEvents],pl:{...G.pl}};
-    // Sync secrets
-    data.secretsFound=SECRET_ZONES.map(z=>z.found);
-    await window.storage.set(SAVE_KEY,JSON.stringify(data),false);
-    if(!silent)toast(t('saved'),'g');
-    return true;
-  }catch(e){if(!silent)toast(t('save_err'),'r');return false;}
+    const data={...G,
+      firedEvents:[...(G.firedEvents||new Set())],
+      pl:{...G.pl},
+      secretsFound:SECRET_ZONES.map(z=>z.found),
+      savedAt:Date.now(),gameVersion:'5'
+    };
+    const json=JSON.stringify(data);
+    // Primary: window.storage (Claude chat)
+    let ok=false;
+    try{await window.storage.set(SAVE_KEY,json,false);ok=true;}catch(e){}
+    // Backup: localStorage (always works in browser)
+    try{localStorage.setItem(SAVE_KEY,json);ok=true;}catch(e){}
+    if(!silent)toast(ok?'💾 Guardado':'❌ Error guardado',ok?'g':'r');
+    return ok;
+  }catch(e){if(!silent)toast('❌ Error guardado','r');return false;}
 }
 
 async function loadGame(){
   try{
-    const r=await window.storage.get(SAVE_KEY,false);
-    if(r&&r.value){
-      const d=JSON.parse(r.value);
+    let json=null;
+    // Try window.storage first
+    try{const r=await window.storage.get(SAVE_KEY,false);if(r&&r.value)json=r.value;}catch(e){}
+    // Fallback: localStorage
+    if(!json){try{json=localStorage.getItem(SAVE_KEY);}catch(e){}}
+    if(json){
+      const d=JSON.parse(json);
       d.firedEvents=new Set(d.firedEvents||[]);
       // Portfolio compat
       if(!d.portfolio.bnb)d.portfolio.bnb=0;
@@ -1366,7 +1583,7 @@ async function loadGame(){
       G=d;lang=G.lang||'es';
       return true;
     }
-  }catch(e){}
+  }catch(e){console.warn('loadGame error:',e);}
   return false;
 }
 
@@ -1375,7 +1592,9 @@ async function deleteSave(){
 }
 
 async function checkSaveExists(){
-  try{const r=await window.storage.get(SAVE_KEY,false);return !!(r&&r.value);}catch(e){return false;}
+  try{const r=await window.storage.get(SAVE_KEY,false);if(r&&r.value)return true;}catch(e){}
+  try{if(localStorage.getItem(SAVE_KEY))return true;}catch(e){}
+  return false;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1393,15 +1612,38 @@ const TILE_COLORS={
   6:['#c8a860','#d8b870'],7:['#2a4a2a','#4a8a6a'],
 };
 
-function resizeCanvas(){
+function resizeCanvas(){resizeGame();}
+let currentScale=1;
+function resizeGame(){
   if(!canvas)return;
   const wrap=document.getElementById('map-wrap');
   if(!wrap)return;
+  const dpr=Math.min(window.devicePixelRatio||1, 2)*currentScale;
   const r=wrap.getBoundingClientRect();
-  const W=Math.round(r.width)||wrap.offsetWidth||window.innerWidth;
-  const H=Math.round(r.height)||wrap.offsetHeight||Math.round(window.innerHeight*0.7);
-  if(W>10&&H>10){canvas.width=W;canvas.height=H;}
+  const W=Math.round(r.width||wrap.offsetWidth||window.innerWidth);
+  const H=Math.round(r.height||wrap.offsetHeight||window.innerHeight*0.65);
+  if(W>10&&H>10){
+    canvas.width=Math.round(W*dpr);
+    canvas.height=Math.round(H*dpr);
+    canvas.style.width=W+'px';
+    canvas.style.height=H+'px';
+    if(ctx2d)ctx2d.setTransform(dpr,0,0,dpr,0,0);
+  }
 }
+function setResolution(scale){
+  currentScale=Math.max(0.25,Math.min(scale,2));
+  resizeGame();
+  toast('🖥 Resolución x'+currentScale,'b');
+}
+function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen().catch(()=>{});
+  }else{
+    document.exitFullscreen();
+  }
+}
+window.setResolution=setResolution;
+window.toggleFullscreen=toggleFullscreen;
 
 function drawFrame(dt){
   if(!canvas||!ctx2d||!G||!MAP_MAIN||!MAP_SEC)return;
@@ -2262,16 +2504,35 @@ function doMarket(){
 }
 
 function openInvestMenu(){
-  openModal(lang==='es'?'📈 INVERTIR':'📈 INVEST',
-    `<div style="font-family:VT323,monospace;font-size:17px;color:#555;margin-bottom:7px">💶 ${fmtE(G.money)}</div>`,
-    [{label:'↩',fn:doMarket}]);
+  // Group assets by category
+  const cats={crypto:{label:'₿ CRIPTOMONEDAS',items:[]},commodity:{label:'🥇 MATERIAS PRIMAS',items:[]},stock:{label:'📊 MERCADOS',items:[]}};
   ASSETS.forEach(a=>{
-    const av=assetAvail(a.id,G.year,G.month);
-    if(!av){addOpt(`${a.emoji} ${a.name} <span style="color:#222">${t('btc_na').replace('Bitcoin',a.name)}</span>`,null,'',true);return;}
-    const p=Math.round(getPrice(a.id,G.year,G.month)*100)/100;
-    const qty=G.portfolio[a.id]||0;
-    const held=qty>0?` · ${lang==='es'?'tienes':'you have'} ${fmtB(qty)}`:' ';
-    addOpt(`${a.emoji} ${a.name} <span style="color:#555">${fmtE(p)}/u${held}</span>`,()=>openTrade(a,p));
+    const cat=a.cat||'stock';
+    if(!cats[cat])cats[cat]={label:cat,items:[]};
+    cats[cat].items.push(a);
+  });
+  let html=`<div style="font-family:'VT323',monospace;font-size:16px;color:#555;margin-bottom:7px">💶 ${fmtE(G.money)} · Patrimonio: <span style="color:#00ff88">${fmtE(netWorth())}</span></div>`;
+  openModal(lang==='es'?'📈 INVERTIR':'📈 INVEST',html,[{label:'↩',fn:doMarket}]);
+  ['crypto','commodity','stock'].forEach(catKey=>{
+    const cat=cats[catKey];
+    if(!cat||!cat.items.length)return;
+    const hdr=document.createElement('div');
+    hdr.style.cssText='font-size:7px;color:#333;margin:8px 0 4px;letter-spacing:2px;border-bottom:1px solid #111;padding-bottom:3px;';
+    hdr.textContent=cat.label;
+    document.getElementById('mcont').appendChild(hdr);
+    cat.items.forEach(a=>{
+      const av=assetAvail(a.id,G.year,G.month);
+      if(!av){addOpt(`${a.emoji} ${a.name} <span style="color:#1a1a1a">— disponible ${a.unlock||''}+</span>`,null,'',true);return;}
+      const p=Math.round(getPrice(a.id,G.year,G.month)*100)/100;
+      // Month-over-month change
+      let prevM=G.month-1,prevY=G.year;if(prevM<1){prevM=12;prevY--;}
+      const pPrev=getPrice(a.id,prevY,prevM);
+      const chg=pPrev>0?((p-pPrev)/pPrev*100).toFixed(1):null;
+      const chgStr=chg?` <span style="color:${parseFloat(chg)>=0?'#00ff88':'#ff3333'};font-size:13px">${parseFloat(chg)>=0?'▲':'▼'}${Math.abs(chg)}%</span>`:'';
+      const qty=G.portfolio[a.id]||0;
+      const valStr=qty>0?` <span style="color:#ffd700;font-size:13px">(${fmtE(Math.round(qty*p))})</span>`:'';
+      addOpt(`${a.emoji} ${a.name}${chgStr} <span style="color:#555">${fmtE(p)}</span>${valStr}`,()=>openTrade(a,p));
+    });
   });
 }
 
@@ -3284,7 +3545,8 @@ let ssQuality=1, ssGameMode='single';
 
 function ssLang(l){
   lang=l;if(G)G.lang=l;
-  document.querySelectorAll('#ss-langs .ss-btn').forEach((b,i)=>b.classList.toggle('act',LANGS_ALL[i]===l));
+  // Update only language buttons by explicit IDs
+  ['es','en','ca','fr','de','pt'].forEach(code=>{const b=document.getElementById('ssl-'+code);if(b)b.classList.toggle('act',code===l);});
   // Update quality desc
   const d=document.getElementById('ss-qdesc');
   if(d)d.textContent=(Q_DESCS[lang]||Q_DESCS.en)[ssQuality];
@@ -3296,14 +3558,22 @@ function ssLangCycle(){
 }
 function ssQual(q){
   ssQuality=q;
-  [0,1,2,3].forEach(i=>{const b=document.getElementById('ssq'+i);if(b)b.classList.toggle('act',i===q);});
+  [0,1,2,3].forEach(i=>{const b=document.getElementById('sq-'+i);if(b)b.classList.toggle('act',i===q);});
   const d=document.getElementById('ss-qdesc');
   if(d)d.textContent=(Q_DESCS[lang]||Q_DESCS.en)[q];
 }
+function ssRes(s){currentScale=s;setResolution&&setResolution(s);['auto','075','15'].forEach(k=>{const b=document.getElementById('ssr-'+k);if(b)b.classList.toggle('act',(k==='auto'&&s===1)||(k==='075'&&s===0.75)||(k==='15'&&s===1.5));});}
 function ssMode(m){
   ssGameMode=m;
-  document.getElementById('ssm1').classList.toggle('act',m==='single');
-  document.getElementById('ssm2').classList.toggle('act',m==='multi');
+  const m1=document.getElementById('ssm1');if(m1)m1.classList.toggle('act',m==='single');
+  const m2=document.getElementById('ssm2');if(m2)m2.classList.toggle('act',m==='multi');
+}
+function ssInitDefaults(){
+  // Mark all defaults as active on page load
+  const b1=document.getElementById('ssl-es');if(b1)b1.classList.add('act');
+  const b2=document.getElementById('sq-1');if(b2)b2.classList.add('act');
+  const b3=document.getElementById('ssm1');if(b3)b3.classList.add('act');
+  const b4=document.getElementById('ssr-auto');if(b4)b4.classList.add('act');
 }
 async function ssStart(load){
   document.getElementById('setup-screen').style.display='none';
@@ -3327,7 +3597,7 @@ function defaultStateV41(){
     seed:genSeed(),
     year:2008,month:1,day:1,
     money:50,
-    portfolio:{btc:0,eth:0,solana:0,bnb:0,xrp:0,gold:0,sp500:0,apple:0,tesla:0},
+    portfolio:{btc:0,eth:0,solana:0,bnb:0,xrp:0,doge:0,dot:0,avax:0,link:0,matic:0,near:0,gold:0,oil:0,sp500:0,nasdaq:0,apple:0,tesla:0},
     items:{phone:false,pc:false,rig:false,server:false,smarthome:false,satellite:false,quantum:false},
     helpers:{finance:0,manager:0,negotiator:0,risk:0}, // legacy compat
     helperMoney:0,
@@ -3359,7 +3629,7 @@ async function loadAndStartQuiet(){
   try{
     const r=await window.storage.get(SAVE_KEY,false);
     if(r&&r.value){
-      const d=JSON.parse(r.value);
+      const d=JSON.parse(json);
       d.firedEvents=new Set(d.firedEvents||[]);
       if(!d.seed)d.seed=genSeed();
       if(typeof d.helperMoney==='undefined')d.helperMoney=Math.max((d.helpers?.finance||0),(d.helpers?.manager||0))*2;
@@ -3630,39 +3900,9 @@ function initMpMode(){
   addChatMsg('SISTEMA','🎮 Multijugador local activado!');
 }
 
-function openMp(){renderMpPanel();document.getElementById('mp-ov').classList.add('open');}
-function closeMp(){document.getElementById('mp-ov').classList.remove('open');}
+// openMp/closeMp defined in v5 multiplayer section below
 
-function renderMpPanel(){
-  const mb=document.getElementById('mp-body');if(!mb)return;
-  const code='JOGO-'+Math.random().toString(36).slice(2,6).toUpperCase();
-  mb.innerHTML=`<div style="background:#0a0a1a;border:1px solid #1a1a44;padding:8px;margin-bottom:10px;">
-    <div style="font-size:7px;color:var(--blue);margin-bottom:4px">🔑 CÓDIGO DE SALA</div>
-    <div style="font-family:monospace;font-size:22px;color:var(--gold);letter-spacing:4px">${code}</div>
-    <div style="font-family:'VT323',monospace;font-size:14px;color:#333;margin-top:3px">Comparte en tu red local</div>
-  </div>`;
-  mpPlayers.forEach((pl,i)=>{
-    const active=mpActiveIdx===i;
-    mb.innerHTML+=`<div style="background:#0a0a0a;border:2px solid ${active?'var(--blue)':'#1a1a1a'};padding:8px;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:8px;color:${active?'var(--blue)':'#444'}">${pl.name} ${active?'▶ ACTIVO':''}</div>
-        <div style="font-family:'VT323',monospace;font-size:16px;color:#555">${pl.state?fmtE(pl.state.money):'Sin partida'}</div>
-      </div>
-      <div style="display:flex;gap:4px;">
-        ${i!==mpActiveIdx?`<button class="bb b" style="font-size:6px" onclick="switchMpPlayer(${i})">Cambiar</button>`:''}
-        <button class="bb p" style="font-size:6px" onclick="closeMp();openSkinChooser()">👤</button>
-      </div>
-    </div>`;
-  });
-  mb.innerHTML+=`<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
-    <button class="bb g" onclick="startCoop()">🤝 Cooperativo</button>
-    <button class="bb r" onclick="startComp()">⚔️ Competitivo</button>
-  </div>`;
-  const mf=document.getElementById('mp-foot');if(!mf)return;mf.innerHTML='';
-  const cl=document.createElement('button');cl.className='bb';cl.textContent='✕ Cerrar';cl.onclick=closeMp;mf.appendChild(cl);
-  const ch=document.createElement('button');ch.className='bb b';ch.textContent='💬 Chat';
-  ch.onclick=()=>{closeMp();toggleChat();};mf.appendChild(ch);
-}
+// renderMpPanel v4 removed — using renderMpPanelLobby/renderMpPanelOnline
 
 function switchMpPlayer(i){
   if(!mpPlayers[i].state)mpPlayers[i].state={...defaultStateV41(),lang};
@@ -3738,45 +3978,93 @@ function modTab(tab){
       <label class="bb p" style="cursor:pointer">📁 Subir archivo
         <input type="file" accept=".json" style="display:none" onchange="loadModFile(event)"></label>
     </div>
-    <div style="font-family:VT323,monospace;font-size:14px;color:#333;margin-top:8px;line-height:1.7">
-      Campos soportados:<br>
-      <span style="color:#662266">name, version, author</span> — identificación<br>
-      <span style="color:#662266">moneyBonus</span> — dinero extra al cargar<br>
-      <span style="color:#662266">multiplier</span> — multiplicador de ganancias<br>
-      <span style="color:#662266">jobs[]</span> — nuevos trabajos<br>
-      <span style="color:#662266">items[]</span> — nuevos objetos<br>
-      <span style="color:#662266">events[]</span> — eventos históricos<br>
+    <div style="font-family:VT323,monospace;font-size:14px;color:#333;margin-top:8px;line-height:1.8">
+      <b style="color:#662266">📋 PLANTILLAS — Pulsa para cargar:</b><br>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+      <button class="bb p" style="font-size:5px" onclick="loadModTemplate('millonario')">💰 Millonario</button>
+      <button class="bb p" style="font-size:5px" onclick="loadModTemplate('crypto_boom')">₿ Crypto Boom</button>
+      <button class="bb p" style="font-size:5px" onclick="loadModTemplate('trabajo_extra')">⚒ Trabajo Extra</button>
+      <button class="bb p" style="font-size:5px" onclick="loadModTemplate('crisis')">📉 Gran Crisis</button>
+      <button class="bb p" style="font-size:5px" onclick="loadModTemplate('modo_dios')">🔱 Modo Dios</button>
+      <button class="bb p" style="font-size:5px" onclick="loadModTemplate('modo_dificil')">💀 Difícil</button>
+    </div>
+    <div style="font-family:VT323,monospace;font-size:13px;color:#1a1a1a;margin-top:6px;line-height:1.6">
+      Todos los campos: name · version · author · moneyBonus ·<br>
+      multiplier · startYear · startMoney · jobs[] · events[] ·<br>
+      skins[] · rules{noJail,earningsX2,volatileMarket,fastTime}
     </div>`;
   } else if(tab==='create'){
     el.innerHTML=`
-    <div style="font-family:'VT323',monospace;font-size:15px;color:#555;margin-bottom:8px">Creador de Mods Visual:</div>
+    <div style="font-family:'VT323',monospace;font-size:15px;color:var(--purple);margin-bottom:6px">✏️ CREADOR DE MODS VISUAL</div>
     <div style="display:flex;flex-direction:column;gap:5px;">
-      <input id="mc-name" placeholder="Nombre del mod*" style="background:#060606;border:1px solid #2a002a;color:#cc88ff;font-family:'VT323',monospace;font-size:17px;padding:5px 8px;">
-      <input id="mc-author" placeholder="Autor" style="background:#060606;border:1px solid #1a001a;color:#cc88ff;font-family:'VT323',monospace;font-size:17px;padding:5px 8px;">
-      <input id="mc-version" placeholder="Versión (ej: 1.0)" style="background:#060606;border:1px solid #1a001a;color:#cc88ff;font-family:'VT323',monospace;font-size:17px;padding:5px 8px;">
-      <div style="font-family:'VT323',monospace;font-size:15px;color:#444;margin-top:4px">Efectos:</div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <span style="font-family:'VT323',monospace;font-size:15px;color:#888;white-space:nowrap">💰 Bonus €</span>
-        <input id="mc-money" type="number" placeholder="0" style="flex:1;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:17px;padding:4px 7px;">
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <span style="font-family:'VT323',monospace;font-size:15px;color:#888;white-space:nowrap">✖ Multiplicador</span>
-        <input id="mc-mult" type="number" step="0.1" placeholder="1.0" style="flex:1;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:17px;padding:4px 7px;">
-      </div>
-      <div style="font-family:'VT323',monospace;font-size:15px;color:#444;margin-top:4px">Nuevo trabajo (opcional):</div>
+
+      <div style="font-family:'VT323',monospace;font-size:14px;color:#444">━━ IDENTIFICACIÓN ━━</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;">
-        <input id="mc-job-name" placeholder="Nombre trabajo" style="flex:1;min-width:100px;background:#060606;border:1px solid #1a001a;color:#cc88ff;font-family:'VT323',monospace;font-size:15px;padding:4px 6px;">
-        <input id="mc-job-pay" type="number" placeholder="Pago (€)" style="width:80px;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:15px;padding:4px 6px;">
-        <input id="mc-job-secs" type="number" placeholder="Secs" style="width:55px;background:#060606;border:1px solid #1a001a;color:#aaa;font-family:'VT323',monospace;font-size:15px;padding:4px 6px;">
-        <input id="mc-job-emoji" placeholder="🔌" style="width:45px;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:17px;padding:4px 6px;text-align:center;">
+        <input id="mc-name" placeholder="Nombre*" style="flex:1;background:#060606;border:1px solid #2a002a;color:#cc88ff;font-family:'VT323',monospace;font-size:17px;padding:4px 7px;">
+        <input id="mc-author" placeholder="Autor" style="width:90px;background:#060606;border:1px solid #1a001a;color:#cc88ff;font-family:'VT323',monospace;font-size:17px;padding:4px 7px;">
+        <input id="mc-version" placeholder="v1.0" style="width:50px;background:#060606;border:1px solid #1a001a;color:#cc88ff;font-family:'VT323',monospace;font-size:17px;padding:4px 7px;">
       </div>
-      <div style="font-family:'VT323',monospace;font-size:13px;color:#333">Emoji · Secs = duración barra de progreso en juego</div>
-      <button class="bb p" onclick="buildAndPreviewMod&&buildAndPreviewMod()">👁 Previsualizar JSON</button>
-      <textarea id="mc-preview" readonly style="width:100%;height:80px;background:#030306;border:1px solid #1a001a;color:#88ff88;font-family:monospace;font-size:11px;padding:5px;resize:none;" placeholder="JSON generado..."></textarea>
+
+      <div style="font-family:'VT323',monospace;font-size:14px;color:#444;margin-top:4px">━━ DINERO ━━</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="bb g" onclick="installBuiltMod&&installBuiltMod()">✅ Instalar este mod</button>
-        <button class="bb p" onclick="downloadBuiltMod&&downloadBuiltMod()">⬇️ Descargar .json</button>
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:120px;">
+          <span style="font-family:'VT323',monospace;font-size:14px;color:#888;white-space:nowrap">💰 Bonus €</span>
+          <input id="mc-money" type="number" placeholder="0" style="flex:1;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:16px;padding:3px 6px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:120px;">
+          <span style="font-family:'VT323',monospace;font-size:14px;color:#888;white-space:nowrap">✖ Multi</span>
+          <input id="mc-mult" type="number" step="0.1" placeholder="1.5" style="flex:1;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:16px;padding:3px 6px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:120px;">
+          <span style="font-family:'VT323',monospace;font-size:14px;color:#888;white-space:nowrap">📅 Año inicio</span>
+          <input id="mc-year" type="number" placeholder="2008" style="flex:1;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:16px;padding:3px 6px;">
+        </div>
       </div>
+
+      <div style="font-family:'VT323',monospace;font-size:14px;color:#444;margin-top:4px">━━ NUEVO TRABAJO ━━</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <input id="mc-job-emoji" placeholder="🔌" style="width:40px;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:17px;padding:3px 5px;text-align:center;">
+        <input id="mc-job-name" placeholder="Nombre del trabajo" style="flex:1;min-width:100px;background:#060606;border:1px solid #1a001a;color:#cc88ff;font-family:'VT323',monospace;font-size:15px;padding:3px 6px;">
+        <input id="mc-job-pay" type="number" placeholder="€ pago" style="width:70px;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:15px;padding:3px 5px;">
+        <input id="mc-job-secs" type="number" placeholder="secs" style="width:50px;background:#060606;border:1px solid #1a001a;color:#aaa;font-family:'VT323',monospace;font-size:15px;padding:3px 5px;">
+      </div>
+
+      <div style="font-family:'VT323',monospace;font-size:14px;color:#444;margin-top:4px">━━ NUEVO EVENTO HISTÓRICO ━━</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <input id="mc-ev-emoji" placeholder="📰" style="width:40px;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:17px;padding:3px 5px;text-align:center;">
+        <input id="mc-ev-name" placeholder="Nombre del evento" style="flex:1;min-width:100px;background:#060606;border:1px solid #1a001a;color:#cc88ff;font-family:'VT323',monospace;font-size:15px;padding:3px 6px;">
+        <input id="mc-ev-year" type="number" placeholder="2025" style="width:55px;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:15px;padding:3px 5px;">
+        <input id="mc-ev-month" type="number" placeholder="mes" min="1" max="12" style="width:45px;background:#060606;border:1px solid #1a001a;color:#ffd700;font-family:'VT323',monospace;font-size:15px;padding:3px 5px;">
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;">
+        <div style="font-family:'VT323',monospace;font-size:13px;color:#555;white-space:nowrap;padding-top:4px">Efecto BTC:</div>
+        <input id="mc-ev-btc" type="number" step="0.01" placeholder="+0.20" style="width:65px;background:#060606;border:1px solid #1a001a;color:#ff8800;font-family:'VT323',monospace;font-size:15px;padding:3px 5px;">
+        <div style="font-family:'VT323',monospace;font-size:13px;color:#555;white-space:nowrap;padding-top:4px">S&P:</div>
+        <input id="mc-ev-sp" type="number" step="0.01" placeholder="-0.10" style="width:65px;background:#060606;border:1px solid #1a001a;color:#00ff41;font-family:'VT323',monospace;font-size:15px;padding:3px 5px;">
+        <div style="font-family:'VT323',monospace;font-size:13px;color:#555;white-space:nowrap;padding-top:4px">ETH:</div>
+        <input id="mc-ev-eth" type="number" step="0.01" placeholder="+0.15" style="width:65px;background:#060606;border:1px solid #1a001a;color:#44aaff;font-family:'VT323',monospace;font-size:15px;padding:3px 5px;">
+      </div>
+      <input id="mc-ev-desc" placeholder="Descripción del evento (opcional)" style="background:#060606;border:1px solid #1a001a;color:#aaa;font-family:'VT323',monospace;font-size:15px;padding:3px 7px;width:100%;">
+
+      <div style="font-family:'VT323',monospace;font-size:14px;color:#444;margin-top:4px">━━ REGLAS ESPECIALES ━━</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <label style="font-family:'VT323',monospace;font-size:15px;color:#888;display:flex;align-items:center;gap:4px;">
+          <input type="checkbox" id="mc-rule-nodeath" style="accent-color:var(--purple)"> Sin cárcel</label>
+        <label style="font-family:'VT323',monospace;font-size:15px;color:#888;display:flex;align-items:center;gap:4px;">
+          <input type="checkbox" id="mc-rule-2x" style="accent-color:var(--purple)"> Ganancias x2</label>
+        <label style="font-family:'VT323',monospace;font-size:15px;color:#888;display:flex;align-items:center;gap:4px;">
+          <input type="checkbox" id="mc-rule-crash" style="accent-color:var(--purple)"> Mercado volátil</label>
+        <label style="font-family:'VT323',monospace;font-size:15px;color:#888;display:flex;align-items:center;gap:4px;">
+          <input type="checkbox" id="mc-rule-fast" style="accent-color:var(--purple)"> Tiempo rápido</label>
+      </div>
+
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;">
+        <button class="bb p" style="flex:1" onclick="buildAndPreviewMod()">👁 Generar JSON</button>
+        <button class="bb g" onclick="installBuiltMod()">✅ Instalar</button>
+        <button class="bb b" onclick="downloadBuiltMod()">⬇ Descargar</button>
+      </div>
+      <textarea id="mc-preview" readonly style="width:100%;height:85px;background:#030306;border:1px solid #1a001a;color:#88ff88;font-family:monospace;font-size:11px;padding:5px;resize:vertical;" placeholder="JSON generado aquí..."></textarea>
     </div>`;
   } else {
     el.innerHTML=`
@@ -3788,43 +4076,76 @@ function modTab(tab){
       3. Compártelo en Discord/foros/GitHub<br>
       4. Otros jugadores lo instalan desde <span style="color:var(--purple)">📦 Instalar</span><br><br>
       <span style="color:#333">El juego es open source — el código JS es visible.<br>
-      Mods = archivos JSON que el juego carga dinámicamente.</span>
+      Mods = archivos JSON que el juego carga dinámicamente.</span><br><br>
+      <b style="color:#555">CAMPOS COMPLETOS DEL MOD:</b>
+      <code style="display:block;background:#050505;padding:6px;font-size:11px;color:#44ff44;margin-top:4px;line-height:1.6;overflow-x:auto;white-space:pre">{
+  "name": "MiMod",
+  "version": "1.0",
+  "author": "TuNombre",
+  "moneyBonus": 10000,
+  "multiplier": 2.0,
+  "startYear": 2015,
+  "startMoney": 500,
+  "jobs": [{"id":"j1","es":"Trabajo","emoji":"🔌",
+    "base":[100,500],"secs":15,"unlock":2010}],
+  "events": [{"y":2025,"m":3,"id":"e1","e":"🚀",
+    "es":"Evento","bs":{"es":"Desc"},
+    "fx":{"btc":0.3,"eth":0.2}}],
+  "rules": {"noJail":true,"earningsX2":true}
+}</code>
     </div>`;
   }
 }
 
 function buildAndPreviewMod(){
-  // Query all mod creator inputs
   const g=id=>document.getElementById(id);
   const name=(g('mc-name')?.value||'').trim();
   if(!name){toast('⚠️ Escribe un nombre para el mod','r');return;}
-  const mod={
-    name,
-    version:(g('mc-version')?.value||'').trim()||'1.0',
-    author:(g('mc-author')?.value||'').trim()||'Anónimo',
-  };
-  const money=parseFloat(g('mc-money')?.value||'0')||0;
-  const mult=parseFloat(g('mc-mult')?.value||'1')||1;
-  const jobName=(g('mc-job-name')?.value||'').trim();
-  const jobPay=parseFloat(g('mc-job-pay')?.value||'0')||0;
-  const jobSecs=parseInt(g('mc-job-secs')?.value||'15')||15;
-  const jobEmoji=(g('mc-job-emoji')?.value||'🔌').trim()||'🔌';
+  const mod={name,version:(g('mc-version')?.value||'1.0').trim(),author:(g('mc-author')?.value||'Anónimo').trim()};
+  const money=parseFloat(g('mc-money')?.value||0)||0;
+  const mult=parseFloat(g('mc-mult')?.value||1)||1;
+  const startYear=parseInt(g('mc-year')?.value||0)||0;
   if(money>0)mod.moneyBonus=money;
   if(mult&&mult!==1&&mult>0)mod.multiplier=mult;
+  if(startYear>=2000&&startYear<=2030)mod.startYear=startYear;
+  // Job
+  const jobName=(g('mc-job-name')?.value||'').trim();
+  const jobPay=parseFloat(g('mc-job-pay')?.value||0)||0;
+  const jobSecs=parseInt(g('mc-job-secs')?.value||15)||15;
+  const jobEmoji=(g('mc-job-emoji')?.value||'🔌').trim()||'🔌';
   if(jobName&&jobPay>0){
-    mod.jobs=[{
-      id:'mod_'+Date.now(),es:jobName,en:jobName,
-      emoji:jobEmoji,
-      base:[Math.round(jobPay*0.8),jobPay],
-      secs:jobSecs,unlock:2008,
-      irl:'~mod'
-    }];
+    mod.jobs=[{id:'mod_'+Date.now(),es:jobName,en:jobName,emoji:jobEmoji,
+      base:[Math.round(jobPay*0.8),jobPay],secs:jobSecs,unlock:2008,irl:'~mod'}];
   }
+  // Event
+  const evName=(g('mc-ev-name')?.value||'').trim();
+  const evYear=parseInt(g('mc-ev-year')?.value||0)||0;
+  const evMonth=parseInt(g('mc-ev-month')?.value||1)||1;
+  const evEmoji=(g('mc-ev-emoji')?.value||'📰').trim()||'📰';
+  const evBtc=parseFloat(g('mc-ev-btc')?.value||0)||0;
+  const evSp=parseFloat(g('mc-ev-sp')?.value||0)||0;
+  const evEth=parseFloat(g('mc-ev-eth')?.value||0)||0;
+  const evDesc=(g('mc-ev-desc')?.value||'').trim();
+  if(evName&&evYear>=2000){
+    const fx={};
+    if(evBtc)fx.btc=evBtc;if(evSp)fx.sp500=evSp;if(evEth)fx.eth=evEth;
+    mod.events=[{y:evYear,m:evMonth,id:'ev_'+Date.now(),e:evEmoji,
+      es:evName,en:evName,
+      bs:{es:evDesc||evName,en:evDesc||evName},
+      fx:Object.keys(fx).length?fx:{}}];
+  }
+  // Rules
+  const rules={};
+  if(g('mc-rule-nodeath')?.checked)rules.noJail=true;
+  if(g('mc-rule-2x')?.checked)rules.earningsX2=true;
+  if(g('mc-rule-crash')?.checked)rules.volatileMarket=true;
+  if(g('mc-rule-fast')?.checked)rules.fastTime=true;
+  if(Object.keys(rules).length)mod.rules=rules;
   const json=JSON.stringify(mod,null,2);
   const el=g('mc-preview');
   if(el){el.value=json;el.style.borderColor='#8a6a00';}
   window._builtMod=json;
-  toast('✅ JSON generado. Revísalo abajo.','g');
+  toast('✅ JSON listo — instálalo o descárgalo','g');
 }
 
 function installBuiltMod(){
@@ -3860,6 +4181,46 @@ function loadModFile(ev){
   ev.target.value='';
 }
 
+
+// ═══════════════════════════════════
+// 🔌 SAFE MOD LOADER
+// ═══════════════════════════════════
+function safeLoadMods(mods){
+  const validMods=[];
+  mods.forEach((mod,i)=>{
+    try{
+      if(!mod||!mod.name)return;
+      if(Array.isArray(mod.jobs)){
+        mod.jobs.forEach((job,j)=>{
+          if(!job.id)job.id='mod_'+Date.now()+'_'+i+'_'+j;
+          if(!Array.isArray(job.base)||job.base.length!==2)job.base=[1,10];
+          job.base[0]=Math.max(1,Math.min(job.base[0]||1,1e12));
+          job.base[1]=Math.max(1,Math.min(job.base[1]||10,1e12));
+          job.secs=Math.max(1,job.secs||10);
+          job.emoji=job.emoji||job.e||'🔌';
+          job.es=job.es||job.name||job.id;
+          job.en=job.en||job.es;
+          job.unlock=job.unlock||2008;
+        });
+      }
+      if(Array.isArray(mod.events)){
+        mod.events.forEach((ev,j)=>{
+          if(!ev.id)ev.id='mev_'+Date.now()+'_'+j;
+          if(!ev.y||ev.y<2000||ev.y>2100)return;
+          ev.m=Math.max(1,Math.min(ev.m||1,12));
+          ev.fx=ev.fx||{};
+          ev.e=ev.e||ev.emoji||'📰';
+          ev.es=ev.es||ev.name||'Evento';
+          ev.en=ev.en||ev.es;
+          ev.bs=ev.bs||{es:ev.es,en:ev.en};
+        });
+      }
+      validMods.push(mod);
+    }catch(e){console.warn('Mod ignorado (error):',e,mod);}
+  });
+  return validMods;
+}
+window.safeLoadMods=safeLoadMods;
 function applyMod(jsonStr){
   try{
     const raw=jsonStr.trim();
@@ -3872,7 +4233,7 @@ function applyMod(jsonStr){
     // Money bonus
     if(mod.moneyBonus&&G){
       G.money+=(mod.moneyBonus||0);
-      applied.push(`+${formatMoney?formatMoney(mod.moneyBonus):mod.moneyBonus}€`);
+      applied.push(`+${typeof formatMoney==='function'?formatMoney(mod.moneyBonus):mod.moneyBonus}€`);
       updateHUD();
     }
     // Earnings multiplier
@@ -3882,6 +4243,7 @@ function applyMod(jsonStr){
     }
     // New jobs
     if(Array.isArray(mod.jobs)){
+      mod.jobs=safeLoadMods([{name:mod.name,jobs:mod.jobs}])[0]?.jobs||[];
       let added=0;
       mod.jobs.forEach(j=>{
         if(j.id&&!JOBS.find(x=>x.id===j.id)){
@@ -3921,6 +4283,13 @@ function applyMod(jsonStr){
         }
       });
       if(added)applied.push(`+${added} eventos`);
+    }
+    // Rules from mod
+    if(mod.rules&&G){
+      if(mod.rules.noJail)G.gameRules={...G.gameRules||{},jailTime:false,crimePenalty:false};
+      if(mod.rules.earningsX2)G.earningsMultiplier=(G.earningsMultiplier||1)*2;
+      if(mod.rules.volatileMarket){applied.push('mercado volátil');}
+      if(mod.rules.fastTime&&G.speed<10){G.speed=10;setSpd(10);applied.push('tiempo x10');}
     }
     // New skins
     if(Array.isArray(mod.skins)){
@@ -3999,6 +4368,12 @@ function renderSettingsContent(){
     row('Mods',`<button class="sq" style="font-size:6px;padding:3px 7px;" onclick="closeSettings();openModPanel()">🔌 Mods</button>`);
     row('Reglas',`<button class="sq" style="font-size:6px;padding:3px 7px;" onclick="closeSettings();openRulesPanel()">📋 Reglas</button>`);
     row('Casino',`<button class="sq" style="font-size:6px;padding:3px 7px;" onclick="closeSettings();openCasino()">🎰 Casino</button>`);
+    row('🖥 Resolución / Fullscreen',`
+      <button class="sq" style="font-size:5px;padding:2px 5px;" onclick="toggleFullscreen()">📱 Full</button>
+      <button class="sq" style="font-size:5px;padding:2px 5px;" onclick="setResolution(0.5)">0.5x</button>
+      <button class="sq" style="font-size:5px;padding:2px 5px;" onclick="setResolution(0.75)">0.75x</button>
+      <button class="sq" style="font-size:5px;padding:2px 5px;" onclick="setResolution(1)">AUTO</button>
+      <button class="sq" style="font-size:5px;padding:2px 5px;" onclick="setResolution(1.5)">HD</button>`);
     row('💳 Pagos / Monetización',`<button class="sq" style="font-size:6px;padding:3px 7px;" onclick="closeSettings();openPayments()">💳 Info</button>`);
     row('📄 Descripción IA',`<button class="sq" style="font-size:6px;padding:3px 7px;" onclick="closeSettings();openGameDescription()">📄 Ver</button>`);
     row('📚 Docs Mods',`<button class="sq" style="font-size:6px;padding:3px 7px;" onclick="closeSettings();openModDocs()">📚 Docs</button>`);
@@ -4058,7 +4433,7 @@ function openSettings(){
 // ═══════════════════════════════════════════════════════════
 //  v4.1 — INIT OVERRIDE
 // ═══════════════════════════════════════════════════════════
-async function init(){
+async function init(){ssInitDefaults&&ssInitDefaults();
   // Detect mobile
   const isMob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   if(isMob)ssQual(0);
@@ -4100,7 +4475,7 @@ function startGame(){
   setInterval(()=>saveGame(true),60000);
   // Init NPCs
   setTimeout(()=>{if(typeof initNPCs==='function')initNPCs();},300);
-  if(G.multiMode)setTimeout(()=>initBroadcastMp(),400);
+  if(G.multiMode)setTimeout(()=>openMp&&openMp(),400);
   // Start render loop
   lastT=performance.now();
   // Two-stage init: first rAF sets lastT, second starts drawing
@@ -4156,12 +4531,13 @@ document.addEventListener('keydown',e=>{
 });
 
 // Ensure init runs on load
-window.addEventListener('load',init);
+window.addEventListener('load',()=>{init();setTimeout(resizeGame,100);setTimeout(resizeGame,500);});
 window.addEventListener('resize',()=>{
-  if(canvas)resizeCanvas();
+  resizeGame();
   const co=document.getElementById('chart-overlay');
   if(co&&co.classList.contains('open'))renderChart();
 });
+window.addEventListener('orientationchange',()=>setTimeout(resizeGame,200));
 
 
 // ═══════════════════════════════════════════════════════════
@@ -4226,42 +4602,102 @@ function myMpState(){
 }
 
 // ── CREAR SALA (anfitrión)
+let bcLocal=null; // BroadcastChannel for same-device fallback
+let bcRoomData={}; // local room state
+
 async function mpCreateRoom(){
   const code=genRoomCode();
+  // Try Firebase first
   const ok=await fbSet(`/rooms/${code}`,{
     code,host:mpMyId,created:Date.now(),
     players:{[mpMyId]:myMpState()},
     chat:[{name:'SISTEMA',text:`Sala ${code} creada`,ts:Date.now()}]
   });
   if(!ok){
-    toast('❌ Sin conexión a internet','r');
-    renderMpPanelOffline();
-    return;
+    // Fallback: BroadcastChannel (same browser, different tabs)
+    try{
+      if(bcLocal)bcLocal.close();
+      bcLocal=new BroadcastChannel('jog_room_'+code);
+      bcRoomData={code,host:mpMyId,players:{[mpMyId]:myMpState()},chat:[{name:'SISTEMA',text:`Sala ${code} creada (local)`,ts:Date.now()}]};
+      bcLocal.onmessage=e=>handleBcMsg(e.data);
+      mpRoomCode=code;mpIsHost=true;mpUseFb=false;
+      toast(`✅ Sala local ${code} (misma pestaña/dispositivo)`,'g');
+      startBcPolling();
+    }catch(e2){
+      toast('❌ No se pudo crear sala','r');
+      renderMpPanelOffline();
+      return;
+    }
+  } else {
+    mpRoomCode=code;mpIsHost=true;mpUseFb=true;
+    localStorage.setItem('jog_room',code);
+    startMpPolling();
+    toast(`✅ Sala creada: ${code}`,'g');
   }
-  mpRoomCode=code;mpIsHost=true;
-  localStorage.setItem('jog_room',code);
-  startMpPolling();
-  toast(`✅ Sala creada: ${code}`,'g');
   renderMpPanelOnline();
+}
+
+let mpUseFb=true;
+
+function handleBcMsg(msg){
+  if(!msg||!msg.type)return;
+  if(msg.type==='join'){
+    bcRoomData.players=bcRoomData.players||{};
+    bcRoomData.players[msg.id]=msg.state;
+    addChatMsg('SISTEMA','👥 '+msg.name+' se unió (local)');
+    // Send room state back
+    bcLocal.postMessage({type:'room',data:bcRoomData});
+  } else if(msg.type==='chat'){
+    addChatMsg(msg.name,msg.text);
+    bcRoomData.chat=bcRoomData.chat||[];
+    bcRoomData.chat.push({name:msg.name,text:msg.text,ts:Date.now()});
+  } else if(msg.type==='state'){
+    bcRoomData.players=bcRoomData.players||{};
+    bcRoomData.players[msg.id]=msg.state;
+  }
+  if(document.getElementById('mp-ov').style.display==='flex')renderMpPanelOnline();
+}
+
+function startBcPolling(){
+  setInterval(()=>{
+    if(!bcLocal||!mpRoomCode)return;
+    // Broadcast my state
+    bcLocal.postMessage({type:'state',id:mpMyId,state:myMpState()});
+    mpRoomData=bcRoomData;
+  },2000);
 }
 
 // ── UNIRSE A SALA (invitado)
 async function mpJoinRoom(code){
   if(!code||code.length<4){toast('Código inválido','r');return;}
   code=code.toUpperCase().trim();
+  // Try Firebase
   const room=await fbGet(`/rooms/${code}`);
-  if(!room){toast('❌ Sala no encontrada o expirada','r');return;}
-  // Add myself
-  await fbPatch(`/rooms/${code}/players`,{[mpMyId]:myMpState()});
-  // Add system chat
-  const chatArr=Object.values(room.chat||{});
-  chatArr.push({name:'SISTEMA',text:`${mpMyName} se unió`,ts:Date.now()});
-  await fbSet(`/rooms/${code}/chat`,chatArr.reduce((a,v,i)=>{a[i]=v;return a;},{}));
-  mpRoomCode=code;mpIsHost=false;
-  localStorage.setItem('jog_room',code);
-  startMpPolling();
-  toast(`✅ Unido a sala ${code}`,'g');
-  renderMpPanelOnline();
+  if(room){
+    await fbPatch(`/rooms/${code}/players`,{[mpMyId]:myMpState()});
+    const chatArr=Object.values(room.chat||{});
+    chatArr.push({name:'SISTEMA',text:`${mpMyName} se unió`,ts:Date.now()});
+    await fbSet(`/rooms/${code}/chat`,chatArr.reduce((a,v,i)=>{a[i]=v;return a;},{}));
+    mpRoomCode=code;mpIsHost=false;mpUseFb=true;
+    localStorage.setItem('jog_room',code);
+    startMpPolling();
+    toast(`✅ Unido a sala ${code}`,'g');
+    renderMpPanelOnline();
+    return;
+  }
+  // Fallback: try BroadcastChannel (same device)
+  try{
+    if(bcLocal)bcLocal.close();
+    bcLocal=new BroadcastChannel('jog_room_'+code);
+    bcLocal.onmessage=e=>handleBcMsg(e.data);
+    mpRoomCode=code;mpIsHost=false;mpUseFb=false;
+    // Request room state from host
+    bcLocal.postMessage({type:'join',id:mpMyId,name:mpMyName,state:myMpState()});
+    toast(`✅ Conectado a sala local ${code}`,'g');
+    setTimeout(renderMpPanelOnline,500);
+  }catch(e){
+    toast('❌ Sala no encontrada. ¿Mismo código? ¿Misma red?','r');
+  }
 }
 
 // ── POLLING cada 2s
@@ -4306,10 +4742,14 @@ async function mpLeaveRoom(){
 // ── CHAT online
 async function mpSendChat(text){
   if(!mpRoomCode||!text)return;
-  const room=await fbGet(`/rooms/${mpRoomCode}/chat`);
-  const arr=Object.values(room||{});
-  arr.push({name:mpMyName,id:mpMyId,text,ts:Date.now()});
-  await fbSet(`/rooms/${mpRoomCode}/chat`,arr.reduce((a,v,i)=>{a[i]=v;return a;},{}));
+  if(mpUseFb){
+    const room=await fbGet(`/rooms/${mpRoomCode}/chat`);
+    const arr=Object.values(room||{});
+    arr.push({name:mpMyName,id:mpMyId,text,ts:Date.now()});
+    await fbSet(`/rooms/${mpRoomCode}/chat`,arr.reduce((a,v,i)=>{a[i]=v;return a;},{}));
+  } else if(bcLocal){
+    bcLocal.postMessage({type:'chat',id:mpMyId,name:mpMyName,text});
+  }
 }
 
 // ── INTERCAMBIO entre jugadores
@@ -4760,7 +5200,6 @@ REFERENCIA RÁPIDA DE FUNCIONES:
 window.openPayments=openPayments;
 window.openGameDescription=openGameDescription;
 window.openModDocs=openModDocs;
-window.bcConnect=bcConnect;
 window.mpSetName=mpSetName;
 window.openPeerTrade=openPeerTrade;
 window.tradeSend=tradeSend;
@@ -4791,6 +5230,251 @@ window.ssQual=typeof ssQual==='function'?ssQual:()=>{};
 window.ssMode=typeof ssMode==='function'?ssMode:()=>{};
 window.ssStart=typeof ssStart==='function'?ssStart:()=>{};
 
+
+function loadModTemplate(type){
+  const templates={
+    millonario:{name:"Millonario",version:"1.0",author:"Plantilla",
+      moneyBonus:1000000,multiplier:3,
+      jobs:[{id:"rich_job",es:"Magnate",en:"Tycoon",emoji:"🤑",base:[5000,20000],secs:30,unlock:2008}]},
+    crypto_boom:{name:"Crypto Boom",version:"1.0",author:"Plantilla",
+      events:[{y:2025,m:6,id:"cboom_"+Date.now(),e:"🚀",es:"¡Boom cripto masivo!",en:"Crypto boom!",
+        bs:{es:"Las criptomonedas explotan al alza. BTC +50%, ETH +40%.",en:"Cryptos explode. BTC +50%."},
+        fx:{btc:0.5,eth:0.4,solana:0.6,bnb:0.3}}]},
+    trabajo_extra:{name:"Trabajo Extra",version:"1.0",author:"Plantilla",
+      jobs:[
+        {id:"streamer",es:"Streamer",en:"Streamer",emoji:"🎮",base:[100,2000],secs:25,unlock:2020},
+        {id:"youtuber",es:"YouTuber",en:"YouTuber",emoji:"📹",base:[50,5000],secs:35,unlock:2015},
+        {id:"trader_pro",es:"Trader Pro",en:"Pro Trader",emoji:"📊",base:[500,10000],secs:40,unlock:2018}
+      ]},
+    crisis:{name:"Gran Crisis 2025",version:"1.0",author:"Plantilla",
+      events:[{y:2025,m:3,id:"crisis25",e:"💥",es:"Crisis económica global",en:"Global economic crisis",
+        bs:{es:"Los mercados colapsan. Recesión mundial.",en:"Markets collapse. Global recession."},
+        fx:{btc:-0.6,eth:-0.65,sp500:-0.45,gold:0.25,solana:-0.7}}]},
+    modo_dios:{name:"Modo Dios",version:"1.0",author:"Plantilla",
+      moneyBonus:10000000,multiplier:10,
+      rules:{noJail:true,earningsX2:true},
+      jobs:[{id:"god_job",es:"Dios del mercado",en:"Market God",emoji:"🔱",base:[100000,1000000],secs:5,unlock:2008}]},
+    modo_dificil:{name:"Modo Difícil",version:"1.0",author:"Plantilla",
+      startMoney:10,multiplier:0.5,
+      rules:{volatileMarket:true}},
+    espana_2008:{name:"España 2008 Realista",version:"1.0",author:"Plantilla",
+      startYear:2008,startMoney:800,multiplier:1,
+      jobs:[{id:"construccion",es:"Construcción",en:"Construction",emoji:"🏗",base:[60,150],secs:20,unlock:2008}],
+      events:[{y:2008,m:11,id:"ibex_crash",e:"📉",es:"IBEX35 colapsa",en:"IBEX35 crashes",
+        bs:{es:"La burbuja inmobiliaria española explota. El paro sube al 25%.",en:"Spanish housing bubble bursts."},
+        fx:{sp500:-0.15,gold:0.1}}]},
+    crypto_maximalista:{name:"Crypto Maximalista",version:"1.0",author:"Plantilla",
+      moneyBonus:50000,
+      jobs:[
+        {id:"defi_farmer",es:"DeFi Farmer",en:"DeFi Farmer",emoji:"🌾",base:[200,3000],secs:25,unlock:2020},
+        {id:"nft_creator2",es:"Artista NFT",en:"NFT Artist",emoji:"🖼",base:[50,10000],secs:30,unlock:2021},
+        {id:"web3_dev",es:"Dev Web3",en:"Web3 Dev",emoji:"⛓",base:[300,1500],secs:40,unlock:2019}
+      ],
+      events:[
+        {y:2024,m:8,id:"solana_ath",e:"◎",es:"Solana nuevo ATH",en:"Solana new ATH",
+          bs:{es:"Solana supera los €300. El ecosistema explota.",en:"Solana surpasses €300."},
+          fx:{solana:0.45,eth:0.1}}
+      ]},
+    inversor_tradicional:{name:"Inversor Tradicional",version:"1.0",author:"Plantilla",
+      startMoney:5000,
+      jobs:[
+        {id:"analista_fin",es:"Analista Financiero",en:"Financial Analyst",emoji:"📊",base:[400,1200],secs:35,unlock:2009},
+        {id:"gestor_fondos",es:"Gestor de Fondos",en:"Fund Manager",emoji:"💼",base:[800,3000],secs:45,unlock:2013}
+      ],
+      events:[
+        {y:2009,m:3,id:"recovery_09",e:"📈",es:"Inicio recuperación 2009",en:"2009 recovery starts",
+          bs:{es:"Los mercados tocan fondo. Comienza la mayor recuperación de la historia.",en:"Markets bottom out. Greatest recovery in history begins."},
+          fx:{sp500:0.25,apple:0.2,gold:-0.05}}
+      ]},
+    speedrun:{name:"Speedrun Mode",version:"1.0",author:"Plantilla",
+      startMoney:1000,multiplier:5,
+      rules:{fastTime:true,earningsX2:true,noJail:true},
+      jobs:[{id:"speedjob",es:"Mega Trabajo",en:"Mega Job",emoji:"⚡",base:[10000,100000],secs:3,unlock:2008}]}
+  };
+  const mod=templates[type];
+  if(!mod)return;
+  const ta=document.getElementById('mod-json-inp');
+  if(ta){ta.value=JSON.stringify(mod,null,2);ta.style.borderColor='#8a6a00';}
+  toast('📋 Plantilla cargada — pulsa "Cargar JSON"','p');
+}
+window.loadModTemplate=loadModTemplate;
+
+// ═══════════════════════════════════
+// QUICK SETTINGS + MORE MENU
+// ═══════════════════════════════════
+let moreMenuOpen=false;
+function toggleMoreMenu(){
+  moreMenuOpen=!moreMenuOpen;
+  const m=document.getElementById('more-menu');
+  const b=document.getElementById('more-btn');
+  if(m)m.style.display=moreMenuOpen?'flex':'none';
+  if(b)b.style.borderColor=moreMenuOpen?'var(--cyan)':'';
+}
+// Close more menu on outside click
+document.addEventListener('click',e=>{
+  if(moreMenuOpen&&!e.target.closest('#more-menu')&&!e.target.closest('#more-btn'))toggleMoreMenu();
+},{passive:true});
+
+function openQuickSettings(){
+  const spd=G?G.speed:1;
+  const qual=G?G.quality:1;
+  const qualNames=['🐢 Baja','⚡ Normal','🚀 Alta','💎 Épica'];
+  const html=`<div style="display:flex;flex-direction:column;gap:8px;">
+    <div>
+      <div style="font-family:'VT323',monospace;font-size:15px;color:#555;margin-bottom:5px;">⏩ VELOCIDAD</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        ${[1,2,5,10,20,50,100].map(s=>`<button class="sq${spd===s?' act':''}" onclick="setSpd(${s});closeModal()">${s}x</button>`).join('')}
+        <button class="sq" onclick="togglePause();closeModal()">⏸</button>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'VT323',monospace;font-size:15px;color:#555;margin-bottom:5px;">🖼 CALIDAD</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        ${[0,1,2,3].map(q=>`<button class="sq${qual===q?' act':''}" onclick="G.quality=${q};closeModal()">${qualNames[q]}</button>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'VT323',monospace;font-size:15px;color:#555;margin-bottom:5px;">💶 INFO</div>
+      <div style="font-family:'VT323',monospace;font-size:17px;color:#888;line-height:1.7">
+        Dinero: <span style="color:#ffd700">${G?fmtE(G.money):'?'}</span><br>
+        Año: <span style="color:#ff8800">${G?G.year:'?'}</span><br>
+        Patrimonio: <span style="color:#00ff88">${G?fmtE(netWorth()):'?'}</span><br>
+        Pasivo/día: <span style="color:#00ffee">${G?fmtE(calcPassive()):'?'}</span>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'VT323',monospace;font-size:15px;color:#555;margin-bottom:5px;">⚡ ACCIONES RÁPIDAS</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="bb g" onclick="closeModal();doWork()">⚒ Trabajar</button>
+        <button class="bb b" onclick="closeModal();doMarket()">📊 Invertir</button>
+        <button class="bb" onclick="closeModal();saveGame(false)">💾 Guardar</button>
+        <button class="bb c" onclick="closeModal();startTutorial()">📖 Tutorial</button>
+        <button class="bb p" onclick="closeModal();openMp&&openMp()">👥 Multi</button>
+      </div>
+    </div>
+  </div>`;
+  openModal('⚡ AJUSTES RÁPIDOS',html,[{label:'✕ Cerrar',fn:closeModal}]);
+}
+window.toggleMoreMenu=toggleMoreMenu;
+window.openQuickSettings=openQuickSettings;
+
+// ═══════════════════════════════════════════════════════════
+//  TUTORIAL SYSTEM v5
+// ═══════════════════════════════════════════════════════════
+const TUTORIAL_STEPS=[
+  {
+    target:null, // fullscreen step
+    title:'🏠 Bienvenido a JOGONÍA',
+    body:'Es 2008. Tienes €50 en el bolsillo y toda la vida por delante.\n\nEl objetivo: comprar las 9 propiedades del mapa y convertirte en millonario.',
+    pos:'center'
+  },
+  {
+    target:'h-date',
+    title:'📅 El tiempo avanza',
+    body:'El tiempo pasa automáticamente. Puedes acelerarlo con los botones 2x, 5x, 10x... hasta 100x.\n\nCada día recibes ingresos pasivos si tienes negocios.',
+    pos:'below'
+  },
+  {
+    target:'h-money',
+    title:'💶 Tu dinero',
+    body:'Empiezas con €50. Cada euro cuenta al principio.\n\nTu patrimonio total incluye dinero + inversiones + negocios.',
+    pos:'below'
+  },
+  {
+    target:null,targetSel:'button[onclick="doWork()"]',
+    title:'⚒ Trabaja para ganar dinero',
+    body:'Pulsa TRABAJAR para elegir un trabajo.\n\n🐕 Pasear perros = rápido pero poco dinero.\n🤖 Consultor IA = lento pero mucho más.\n\nCada trabajo tiene una barra de progreso.',
+    pos:'above'
+  },
+  {
+    target:null,targetSel:'button[onclick="doMarket()"]',
+    title:'📊 Invierte en activos',
+    body:'El MERCADO tiene 15 activos: BTC, ETH, Oro, S&P500, DOGE...\n\nBitcoin no existe hasta octubre de 2009.\nCompra barato, vende caro. ¡Los precios son históricos reales!',
+    pos:'above'
+  },
+  {
+    target:null,targetSel:'button[onclick="doCrime()"]',
+    title:'🔪 Crimen (alto riesgo)',
+    body:'El crimen da dinero rápido pero si acumulas 5 ⭐ te arrestan.\n\nEl ayudante de robos reduce el riesgo de arresto.',
+    pos:'above'
+  },
+  {
+    target:'h-worth',
+    title:'🏘 Compra propiedades',
+    body:'Ve al mapa (tecla E o el joystick) y acércate a las casas para comprarlas.\n\nO usa el botón ⋯ Más → Casas para comprar desde el menú.',
+    pos:'below'
+  },
+  {
+    target:null,targetSel:'button[onclick="doHelpers()"]',
+    title:'🤖 Ayudantes (50 niveles)',
+    body:'Los AYUDANTES son clave:\n\n💰 Ayudante Dinero: genera dinero automáticamente cada día.\n🔪 Ayudante Crimen: aumenta el éxito y reduce el riesgo.\n⚡ Auto Clicker: ve 20 anuncios para desbloquearlo.',
+    pos:'above'
+  },
+  {
+    target:null,
+    title:'🎯 ¡Ya estás listo!',
+    body:'Recuerda:\n• Guarda la partida en ⚙ Ajustes\n• Exporta para no perder progreso\n• Eventos históricos reales afectan los precios\n• Admin password: admin-2026-beta\n\n¡Suerte, millonario!',
+    pos:'center'
+  }
+];
+let tutStep=0;
+let tutActive=false;
+
+function startTutorial(){
+  tutStep=0;tutActive=true;
+  document.getElementById('tutorial-ov').classList.add('active');
+  renderTutStep();
+}
+function tutSkip(){
+  tutActive=false;
+  document.getElementById('tutorial-ov').classList.remove('active');
+  try{localStorage.setItem('jog_tutorial_done','1');}catch(e){}
+  toast('Tutorial omitido. ⚙ Ajustes → Tutorial para verlo de nuevo.','b');
+}
+function tutNext(){
+  tutStep++;
+  if(tutStep>=TUTORIAL_STEPS.length){tutSkip();return;}
+  renderTutStep();
+}
+function renderTutStep(){
+  const step=TUTORIAL_STEPS[tutStep];
+  const ov=document.getElementById('tutorial-ov');
+  const spot=document.getElementById('tut-spot');
+  const bubble=document.getElementById('tut-bubble');
+  const title=document.getElementById('tut-title');
+  const body=document.getElementById('tut-body');
+  const stepEl=document.getElementById('tut-step');
+  if(!ov||!spot||!bubble)return;
+  title.textContent=step.title;
+  body.textContent=step.body;
+  stepEl.textContent=`Paso ${tutStep+1}/${TUTORIAL_STEPS.length}`;
+  // Find target element
+  let target=null;
+  if(step.target)target=document.getElementById(step.target);
+  else if(step.targetSel)target=document.querySelector(step.targetSel);
+  if(target){
+    const r=target.getBoundingClientRect();
+    spot.style.cssText=`position:fixed;border:3px solid var(--gold);border-radius:4px;
+      box-shadow:0 0 0 9999px rgba(0,0,0,.78);animation:tutPulse 1.5s ease-in-out infinite;
+      left:${r.left-4}px;top:${r.top-4}px;width:${r.width+8}px;height:${r.height+8}px;`;
+    // Position bubble
+    const bw=260,bh=180;
+    let bx=r.left,by=r.bottom+10;
+    if(step.pos==='above')by=r.top-bh-10;
+    if(bx+bw>window.innerWidth)bx=window.innerWidth-bw-10;
+    if(bx<6)bx=6;
+    if(by<6)by=6;
+    bubble.style.cssText=`position:fixed;left:${bx}px;top:${by}px;max-width:${bw}px;background:#080808;border:2px solid var(--gold);padding:12px;pointer-events:all;animation:fadein .3s;z-index:9999;`;
+  } else {
+    // Center
+    spot.style.cssText='display:none;';
+    bubble.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:300px;background:#080808;border:2px solid var(--gold);padding:16px;pointer-events:all;animation:fadein .3s;z-index:9999;`;
+  }
+}
+window.startTutorial=startTutorial;
+window.tutNext=tutNext;
+window.tutSkip=tutSkip;
+
 </script>
 
 <!-- ═══ JOB PROGRESS OVERLAY v5 ═══ -->
@@ -4803,6 +5487,20 @@ window.ssStart=typeof ssStart==='function'?ssStart:()=>{};
     <div id="jpb-pct">0%</div>
     <div id="jpb-earn"></div>
     <button class="bb r" id="jpb-cancel" onclick="cancelJob()">✕ Cancelar</button>
+  </div>
+</div>
+
+<!-- ═══ TUTORIAL OVERLAY ═══ -->
+<div id="tutorial-ov">
+  <div class="tut-spotlight" id="tut-spot"></div>
+  <div class="tut-bubble" id="tut-bubble">
+    <div class="tut-title" id="tut-title">Tutorial</div>
+    <div class="tut-body" id="tut-body">...</div>
+    <div class="tut-step" id="tut-step">Paso 1/8</div>
+    <div class="tut-btns">
+      <button class="bb g" style="font-size:7px" onclick="tutNext()">▶ Siguiente</button>
+      <button class="bb r" style="font-size:7px" onclick="tutSkip()">✕ Saltar</button>
+    </div>
   </div>
 </div>
 </body>
